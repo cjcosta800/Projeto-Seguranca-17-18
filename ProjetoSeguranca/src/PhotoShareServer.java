@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,6 +24,7 @@ public class PhotoShareServer {
         System.out.println("Importing users and passwords...");
         HashMap<String, String> userpwd = loadPasswords();
         
+        System.out.println("Listening for new connections...");
         PhotoShareServer photoShareServer = new PhotoShareServer();
         photoShareServer.startServer(socket);
 
@@ -59,10 +62,41 @@ public class PhotoShareServer {
     	
     	ServerThread(Socket inSoc) {
     		socket = inSoc;
+    		System.out.println("New connection with client");
     	}
     	
+    	/**
+    	 * 
+    	 */
     	public void run() {
-    		// TODO
+			try {
+				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+			
+				String user = null;
+				String password = null;
+				
+				try {
+					user = (String) inStream.readObject();
+					password = (String) inStream.readObject();
+				}catch (ClassNotFoundException e1) {
+					// TODO: handle exception
+				}
+				
+				//TODO Authentication
+				
+				//TODO method caller
+				
+				outStream.close();
+				inStream.close();
+				socket.close();
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
     	}
     	
     }
@@ -73,7 +107,7 @@ public class PhotoShareServer {
      * @throws IOException
      */
     public static HashMap<String, String> loadPasswords() throws IOException {
-        BufferedReader filereader = new BufferedReader(new FileReader("password.txt"));
+        BufferedReader filereader = new BufferedReader(new FileReader("../password.txt"));
 
         String line = filereader.readLine();
 
@@ -91,6 +125,8 @@ public class PhotoShareServer {
 
         }
 
+        System.out.println("Import complete.");
+        
         filereader.close();
 
         return userpwd;
