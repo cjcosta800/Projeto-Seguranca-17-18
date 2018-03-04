@@ -61,36 +61,40 @@ public class PhotoShare {
 
 
 
-		switch (args[3]) {
-		case "-a" : 
-			addCopyPhotos(args[4]); //Só passa uma foto de cada vez
-			break;
-		case "-l" :
-			userPhotoList(args[4]);
-			break;
-		case "-i" :
-			checkPhotoLikes(args[4],args[5]);
-			break;
-		case "-g" :
-			pullAllPhotos(args[4]);
-			break;
-		case "-c" :
-			commentPhoto(args[4],args[5],args[6]);
-			break;
-		case "-L" :
-			likePhoto(args[4],args[5]);
-			break;
-		case "-D" :
-			dislikePhoto(args[4],args[5]);
-			break;
-		case "-f" :
-			addFollowers(args[4]); //Utilizadores são separados por virgulas.
-			break;
-		case "-r" :
-			removeFollowers(args[4]); //Utilizadores são separados por virgulas.
-			break;
-		default:
-			System.err.println("Command Unknown");
+		if (args.length > 3) {
+
+
+			switch (args[3]) {
+			case "-a" : 
+				addCopyPhotos(args[4]); //Só passa uma foto de cada vez
+				break;
+			case "-l" :
+				userPhotoList(args[4]);
+				break;
+			case "-i" :
+				checkPhotoLikes(args[4],args[5]);
+				break;
+			case "-g" :
+				pullAllPhotos(args[4]);
+				break;
+			case "-c" :
+				commentPhoto(args[4],args[5],args[6]);
+				break;
+			case "-L" :
+				likePhoto(args[4],args[5]);
+				break;
+			case "-D" :
+				dislikePhoto(args[4],args[5]);
+				break;
+			case "-f" :
+				addFollowers(args[4]); //Utilizadores são separados por virgulas.
+				break;
+			case "-r" :
+				removeFollowers(args[4]); //Utilizadores são separados por virgulas.
+				break;
+			default:
+				System.err.println("Command Unknown");
+			}
 		}
 	}
 
