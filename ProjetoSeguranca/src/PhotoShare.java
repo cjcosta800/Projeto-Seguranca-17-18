@@ -38,8 +38,48 @@ public class PhotoShare {
 
 			outStream.writeObject(new String(userId));
 			outStream.writeObject(new String(password));
+			Boolean answer = (Boolean)inStream.readObject();
 
-			
+
+
+			if (args.length > 3) {
+
+				switch (args[3]) {
+				case "-a" : 
+					addCopyPhotos(args[4]); //Só passa uma foto de cada vez
+					break;
+				case "-l" :
+					userPhotoList(args[4]);
+					break;
+				case "-i" :
+					checkPhotoLikes(args[4],args[5]);
+					break;
+				case "-g" :
+					pullAllPhotos(args[4]);
+					break;
+				case "-c" :
+					commentPhoto(args[4],args[5],args[6]);
+					break;
+				case "-L" :
+					likePhoto(args[4],args[5]);
+					break;
+				case "-D" :
+					dislikePhoto(args[4],args[5]);
+					break;
+				case "-f" :
+					addFollowers(args[4]); //Utilizadores são separados por virgulas.
+					break;
+				case "-r" :
+					removeFollowers(args[4]); //Utilizadores são separados por virgulas.
+					break;
+				default:
+					System.err.println("Command Unknown");
+				}
+			}
+
+			else {
+				outStream.writeObject(new String("finished"));
+			}
 
 			outStream.close();
 			inStream.close();
@@ -51,44 +91,8 @@ public class PhotoShare {
 			System.exit(1);
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-
-
-
-		if (args.length > 3) {
-
-
-			switch (args[3]) {
-			case "-a" : 
-				addCopyPhotos(args[4]); //Só passa uma foto de cada vez
-				break;
-			case "-l" :
-				userPhotoList(args[4]);
-				break;
-			case "-i" :
-				checkPhotoLikes(args[4],args[5]);
-				break;
-			case "-g" :
-				pullAllPhotos(args[4]);
-				break;
-			case "-c" :
-				commentPhoto(args[4],args[5],args[6]);
-				break;
-			case "-L" :
-				likePhoto(args[4],args[5]);
-				break;
-			case "-D" :
-				dislikePhoto(args[4],args[5]);
-				break;
-			case "-f" :
-				addFollowers(args[4]); //Utilizadores são separados por virgulas.
-				break;
-			case "-r" :
-				removeFollowers(args[4]); //Utilizadores são separados por virgulas.
-				break;
-			default:
-				System.err.println("Command Unknown");
-			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -109,8 +113,8 @@ public class PhotoShare {
 
 	}
 
-	private static void addCopyPhotos(String string) {
-		// TODO Auto-generated method stub
+	private static void addCopyPhotos(String string){
+		// PREPARAR A MENSAGEM, ENVIAR E ESPERAR RESPOSTA
 
 	}
 
