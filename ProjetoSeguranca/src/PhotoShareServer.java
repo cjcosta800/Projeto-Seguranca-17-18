@@ -24,6 +24,7 @@ public class PhotoShareServer {
         System.out.println("Importing users and passwords...");
         HashMap<String, String> userpwd = loadPasswords();
         
+        System.out.println("Listening for new connections...");
         PhotoShareServer photoShareServer = new PhotoShareServer();
         photoShareServer.startServer(socket);
 
@@ -61,13 +62,13 @@ public class PhotoShareServer {
     	
     	ServerThread(Socket inSoc) {
     		socket = inSoc;
+    		System.out.println("New connection with client");
     	}
     	
     	/**
     	 * 
     	 */
     	public void run() {
- 
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -106,7 +107,7 @@ public class PhotoShareServer {
      * @throws IOException
      */
     public static HashMap<String, String> loadPasswords() throws IOException {
-        BufferedReader filereader = new BufferedReader(new FileReader("password.txt"));
+        BufferedReader filereader = new BufferedReader(new FileReader("../password.txt"));
 
         String line = filereader.readLine();
 
@@ -124,6 +125,8 @@ public class PhotoShareServer {
 
         }
 
+        System.out.println("Import complete.");
+        
         filereader.close();
 
         return userpwd;
