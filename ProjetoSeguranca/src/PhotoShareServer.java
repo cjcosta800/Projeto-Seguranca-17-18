@@ -1,6 +1,8 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -62,7 +64,35 @@ public class PhotoShareServer {
     	}
     	
     	public void run() {
-    		// TODO
+ 
+			try {
+				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+			
+				String user = null;
+				String password = null;
+				
+				try {
+					user = (String) inStream.readObject();
+					password = (String) inStream.readObject();
+				}catch (ClassNotFoundException e1) {
+					// TODO: handle exception
+				}
+				
+				//TODO Authentication
+				
+				//TODO method caller
+				
+				outStream.close();
+				inStream.close();
+				socket.close();
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
     	}
     	
     }
