@@ -39,6 +39,7 @@ public class PhotoShare {
 			outStream.writeObject(new String(userId));
 			outStream.writeObject(new String(password));
 
+			
 
 
 			outStream.close();
