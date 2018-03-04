@@ -1,5 +1,9 @@
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class PhotoShare {
 
@@ -15,16 +19,47 @@ public class PhotoShare {
 			System.err.println("For example: 'PhotoShare <localUserId> <password> <serverAddress> -a <photos>'");
 			System.exit(0);
 		}
-		
-		
+
+
 		String userId = args[0];
 		String password = args[1];
-		
+
 		String[] serverAddress = args[2].split(":");
 		String ip = serverAddress[0];
 		int port = Integer.parseInt(serverAddress[1]);
-		
-		Socket socket = startClient(ip,port);
+
+		try {
+
+			Socket socket = startClient(ip,port);
+			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+
+			/* Envia o login ao servidor */
+
+			outStream.writeObject(new String(userId));
+			outStream.writeObject(new String(password));
+
+			/* Fica a espera de resposta */
+
+			System.out.println((Boolean) inStream.readObject());
+
+
+			outStream.close();
+			inStream.close();
+			socket.close();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			System.err.println("File not found!");
+			System.exit(1);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
 
 		switch (args[3]) {
 		case "-a" : 
