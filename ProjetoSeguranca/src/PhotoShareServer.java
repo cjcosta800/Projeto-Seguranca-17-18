@@ -63,6 +63,9 @@ public class PhotoShareServer {
     		socket = inSoc;
     	}
     	
+    	/**
+    	 * 
+    	 */
     	public void run() {
  
 			try {
