@@ -41,7 +41,6 @@ public class PhotoShare {
 
 			
 
-
 			outStream.close();
 			inStream.close();
 			socket.close();
