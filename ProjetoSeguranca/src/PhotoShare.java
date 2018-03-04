@@ -55,7 +55,7 @@ public class PhotoShare {
 			removeFollowers(args[4]); //Utilizadores são separados por virgulas.
 			break;
 		default:
-			System.err.println("Command UnknownTroll");
+			System.err.println("Command Unknown");
 		}
 	}
 
