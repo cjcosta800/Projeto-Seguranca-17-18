@@ -39,9 +39,6 @@ public class PhotoShare {
 			outStream.writeObject(new String(userId));
 			outStream.writeObject(new String(password));
 
-			/* Fica a espera de resposta */
-
-			System.out.println((Boolean) inStream.readObject());
 
 
 			outStream.close();
