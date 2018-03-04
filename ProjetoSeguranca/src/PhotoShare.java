@@ -40,45 +40,61 @@ public class PhotoShare {
 			outStream.writeObject(new String(password));
 			Boolean answer = (Boolean)inStream.readObject();
 
+			if (answer) {
 
+				if (args.length > 3) {
 
-			if (args.length > 3) {
+					outStream.writeObject(new String(args[3]));
 
-				switch (args[3]) {
-				case "-a" : 
-					addCopyPhotos(args[4]); //Só passa uma foto de cada vez
-					break;
-				case "-l" :
-					userPhotoList(args[4]);
-					break;
-				case "-i" :
-					checkPhotoLikes(args[4],args[5]);
-					break;
-				case "-g" :
-					pullAllPhotos(args[4]);
-					break;
-				case "-c" :
-					commentPhoto(args[4],args[5],args[6]);
-					break;
-				case "-L" :
-					likePhoto(args[4],args[5]);
-					break;
-				case "-D" :
-					dislikePhoto(args[4],args[5]);
-					break;
-				case "-f" :
-					addFollowers(args[4]); //Utilizadores são separados por virgulas.
-					break;
-				case "-r" :
-					removeFollowers(args[4]); //Utilizadores são separados por virgulas.
-					break;
-				default:
-					System.err.println("Command Unknown");
+					switch (args[3]) {
+					case "-a" : 
+						//TODO Só passa uma foto de cada vez
+						break;
+					case "-l" :
+						outStream.writeObject(new String(args[4]));
+						inStream.readObject();
+						break;
+					case "-i" :
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						inStream.readObject();
+						break;
+					case "-g" :
+						//TODO
+
+						break;
+					case "-c" :
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						outStream.writeObject(new String(args[6]));
+						inStream.readObject();
+						break;
+					case "-L" :
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						inStream.readObject();
+						break;
+					case "-D" :
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						inStream.readObject();
+						break;
+					case "-f" :
+						outStream.writeObject(new String(args[4])); //Utilizadores são separados por virgulas.
+						inStream.readObject(); 
+						break;
+					case "-r" :
+						outStream.writeObject(new String(args[4])); //Utilizadores são separados por virgulas.
+						inStream.readObject(); 
+						break;
+					default:
+						System.err.println("Command Unknown");
+					}
 				}
-			}
 
-			else {
-				outStream.writeObject(new String("finished"));
+				else {
+					outStream.writeObject(new String("finished"));
+				}
 			}
 
 			outStream.close();
@@ -112,52 +128,5 @@ public class PhotoShare {
 		return socket;
 
 	}
-
-	private static void addCopyPhotos(String string){
-		// PREPARAR A MENSAGEM, ENVIAR E ESPERAR RESPOSTA
-
-	}
-
-	private static void userPhotoList(String string) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void checkPhotoLikes(String string, String string2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void pullAllPhotos(String string) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void commentPhoto(String string, String string2, String string3) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void likePhoto(String string, String string2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void dislikePhoto(String string, String string2) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void addFollowers(String string) {
-		// TODO Auto-generated method stub
-
-	}
-
-	private static void removeFollowers(String string) {
-		// TODO Auto-generated method stub
-
-	}
-
-
 
 }
