@@ -44,9 +44,6 @@ public class PhotoShare {
 			outStream.close();
 			inStream.close();
 			socket.close();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (FileNotFoundException e) {
