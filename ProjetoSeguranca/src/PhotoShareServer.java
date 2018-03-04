@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class PhotoShareServer {
 
@@ -13,11 +15,56 @@ public class PhotoShareServer {
             System.err.println("For example: 'PhotoShareServer 23456'");
             System.exit(0);
         }
+        
+        int socket = Integer.parseInt(args[0]);
 
         /* Load User-Password file */
         System.out.println("Importing users and passwords...");
         HashMap<String, String> userpwd = loadPasswords();
+        
+        PhotoShareServer photoShareServer = new PhotoShareServer();
+        photoShareServer.startServer(socket);
 
+    }
+    
+    public void startServer(int socket) {
+    	
+    	ServerSocket sSoc = null;
+    	
+    	try {
+			sSoc = new ServerSocket(socket);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(-1);
+		}
+    	
+    	while(true) {
+    		Socket inSoc = null;
+			try {
+				inSoc = sSoc.accept();
+				ServerThread newServerThread = new ServerThread(inSoc);
+	    		newServerThread.start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    		
+    	}
+    	
+    }
+    
+    class ServerThread extends Thread {
+    	
+    	private Socket socket = null;
+    	
+    	ServerThread(Socket inSoc) {
+    		socket = inSoc;
+    	}
+    	
+    	public void run() {
+    		// TODO
+    	}
+    	
     }
 
     /**
