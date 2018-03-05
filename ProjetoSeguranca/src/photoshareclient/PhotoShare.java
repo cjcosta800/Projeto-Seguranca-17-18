@@ -1,3 +1,4 @@
+package photoshareclient;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -48,7 +49,7 @@ public class PhotoShare {
 
 					switch (args[3]) {
 					case "-a" : 
-						//TODO Só passa uma foto de cada vez
+						//TODO Sï¿½ passa uma foto de cada vez
 						break;
 					case "-l" :
 						outStream.writeObject(new String(args[4]));
@@ -80,11 +81,11 @@ public class PhotoShare {
 						inStream.readObject();
 						break;
 					case "-f" :
-						outStream.writeObject(new String(args[4])); //Utilizadores são separados por virgulas.
+						outStream.writeObject(new String(args[4])); //Utilizadores sï¿½o separados por virgulas.
 						inStream.readObject(); 
 						break;
 					case "-r" :
-						outStream.writeObject(new String(args[4])); //Utilizadores são separados por virgulas.
+						outStream.writeObject(new String(args[4])); //Utilizadores sï¿½o separados por virgulas.
 						inStream.readObject(); 
 						break;
 					default:
