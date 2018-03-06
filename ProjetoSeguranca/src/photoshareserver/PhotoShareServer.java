@@ -20,10 +20,6 @@ public class PhotoShareServer {
         }
         
         int socket = Integer.parseInt(args[0]);
-
-        /* Load User-Password file */
-        System.out.println("Importing users and passwords...");
-        HashMap<String, String> userpwd = loadPasswords();
         
         System.out.println("Listening for new connections...");
         PhotoShareServer photoShareServer = new PhotoShareServer();
@@ -102,35 +98,6 @@ public class PhotoShareServer {
     	
     }
 
-    /**
-     * Imports users and passwords from a file
-     * @return HashMap with user - password
-     * @throws IOException
-     */
-    public static HashMap<String, String> loadPasswords() throws IOException {
-        BufferedReader filereader = new BufferedReader(new FileReader("../password.txt"));
-
-        String line = filereader.readLine();
-
-        // HashMap <User, Password>
-        HashMap<String, String> userpwd = new HashMap<>();
-        String tokenised[] = null;
-        // user;password
-        while (line != null) {
-
-            tokenised = line.split(":");
-
-            userpwd.put(tokenised[0], tokenised[1]);
-
-            line = filereader.readLine();
-
-        }
-
-        System.out.println("Import complete.");
-        
-        filereader.close();
-
-        return userpwd;
-    }
+    
 
 }
