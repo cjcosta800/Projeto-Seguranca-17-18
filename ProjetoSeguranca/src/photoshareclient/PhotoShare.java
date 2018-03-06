@@ -113,6 +113,7 @@ public class PhotoShare {
 		}
 	}
 
+	
 	public static Socket startClient(String ip, int port) {
 
 		Socket socket = null;

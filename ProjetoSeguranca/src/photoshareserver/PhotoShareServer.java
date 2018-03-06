@@ -29,6 +29,7 @@ public class PhotoShareServer {
         PhotoShareServer photoShareServer = new PhotoShareServer();
         photoShareServer.startServer(socket);
 
+        
     }
     
     public void startServer(int socket) {
