@@ -1,4 +1,4 @@
-package photoshareserver;
+ package photoshareserver;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -71,7 +71,7 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				ServerLogic serverLogic = new ServerLogic("../../src/photoshareserver/password.txt");
+				ServerLogic serverLogic = new ServerLogic("./src/photoshareserver/passwords.txt");
 
 				String user = null;
 				String password = null;

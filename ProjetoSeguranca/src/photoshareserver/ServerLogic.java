@@ -1,7 +1,8 @@
-package photoshareserver;
+ package photoshareserver;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -46,11 +47,11 @@ public class ServerLogic {
 				return false;
 		}
 		else {
-			registerUser(user, password);
+			boolean registered = registerUser(user, password);
 
 			this.user = user;
 
-			return true;
+			return registered;
 		}
 
 	}
@@ -61,13 +62,22 @@ public class ServerLogic {
 	 * @param password
 	 * @throws IOException
 	 */
-	private void registerUser(String user, String password) throws IOException {
+	private boolean registerUser(String user, String password) throws IOException {
+		
+		File file = new File("./src/photoshareserver/Photos/" + user + "/followers.txt");
+		
+		file.getParentFile().mkdirs();
+		file.createNewFile();
 
 		BufferedWriter fileWriter = new BufferedWriter(new FileWriter(this.passwordsPath, true));
 
-		fileWriter.write(user + ":" + password);
+		fileWriter.write(user + ":" + password + "\n");
 
 		fileWriter.close();
+
+		System.out.println("New user " + user + " created.");
+		
+		return true;
 
 	}
 
@@ -95,8 +105,6 @@ public class ServerLogic {
 			line = filereader.readLine();
 
 		}
-
-		System.out.println("Import complete.");
 
 		filereader.close();
 
