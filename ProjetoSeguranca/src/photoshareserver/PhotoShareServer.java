@@ -10,98 +10,150 @@ import java.net.Socket;
 
 public class PhotoShareServer {
 
-    public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException {
 
-        /* Check number of args. Must be 1 */
-        if (args.length != 1) {
-            System.err.println("Server must be run with the following command: 'PhotoShareServer <port>'");
-            System.err.println("For example: 'PhotoShareServer 23456'");
-            System.exit(0);
-        }
-        
-        int socket = Integer.parseInt(args[0]);
-        
-        System.out.println("Listening for new connections...");
-        PhotoShareServer photoShareServer = new PhotoShareServer();
-        photoShareServer.startServer(socket);
+		/* Check number of args. Must be 1 */
+		if (args.length != 1) {
+			System.err.println("Server must be run with the following command: 'PhotoShareServer <port>'");
+			System.err.println("For example: 'PhotoShareServer 23456'");
+			System.exit(0);
+		}
 
-        
-    }
-    
-    public void startServer(int socket) {
-    	
-    	ServerSocket sSoc = null;
-    	
-    	try {
+		int socket = Integer.parseInt(args[0]);
+
+		System.out.println("Listening for new connections...");
+		PhotoShareServer photoShareServer = new PhotoShareServer();
+		photoShareServer.startServer(socket);
+
+
+	}
+
+	public void startServer(int socket) {
+
+		ServerSocket sSoc = null;
+
+		try {
 			sSoc = new ServerSocket(socket);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(-1);
 		}
-    	
-    	while(true) {
-    		Socket inSoc = null;
+
+		while(true) {
+			Socket inSoc = null;
 			try {
 				inSoc = sSoc.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
-	    		newServerThread.start();
+				newServerThread.start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-    		
-    	}
-    	
-    }
-    
-    class ServerThread extends Thread {
-    	
-    	private Socket socket = null;
-    	
-    	ServerThread(Socket inSoc) {
-    		socket = inSoc;
-    		System.out.println("New connection with client");
-    	}
-    	
-    	/**
-    	 * 
-    	 */
-    	public void run() {
+
+		}
+
+	}
+
+	class ServerThread extends Thread {
+
+		private Socket socket = null;
+
+		ServerThread(Socket inSoc) {
+			socket = inSoc;
+			System.out.println("New connection with client");
+		}
+
+		/**
+		 * 
+		 */
+		public void run() {
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-			
+
 				ServerLogic serverLogic = new ServerLogic("../../src/photoshareserver/password.txt");
-				
+
 				String user = null;
 				String password = null;
-				
+
 				user = (String) inStream.readObject();
 				password = (String) inStream.readObject();
-				
+
 				if(!serverLogic.getAuthenticated(user, password)) {
+					// informs client that login failed
+					outStream.writeObject(new Boolean(false));
+
 					outStream.close();
 					inStream.close();
 					socket.close();
 					return;
 				}
-				
-				//TODO method caller
-				
+
+				// informs client that login was successful!
+				outStream.writeObject(new Boolean(true));
+
+
+				String command = (String) inStream.readObject();
+				// adiciona/copia fotos para o servidor
+				if(command.equals("-a")) {
+					String nomefotos = (String) inStream.readObject();
+
+					// lista as fotografias do do userid	
+				} else if (command.equals("-l")) {
+					String userId = (String) inStream.readObject();
+
+					// devolve comentarios e o numero de likes da foto	
+				} else if (command.equals("-i")) {
+					String userId = (String) inStream.readObject();
+					String photoName = (String) inStream.readObject();
+
+					// copia do servidor para o cliente fotos de userid
+				} else if (command.equals("-g")) {
+					String userId = (String) inStream.readObject();
+
+					// adiciona um comentario a fotografia
+				} else if (command.equals("-c")) {
+					String comment = (String) inStream.readObject();
+					String userId = (String) inStream.readObject();
+					String photo = (String) inStream.readObject();
+
+					// adiciona um Like à fotografia
+				} else if (command.equals("-L")) {
+					String userId = (String) inStream.readObject();
+					String photo = (String) inStream.readObject();
+
+					// adiciona um Dislike à fotografia
+				} else if (command.equals("-D")) {
+					String userId = (String) inStream.readObject();
+					String photo = (String) inStream.readObject();
+
+					// adiciona utilizadores como seguidores do user
+				} else if (command.equals("-f")) {
+					String followUserIds = (String) inStream.readObject();
+
+					// remove utilizadores de seguidores do user
+				} else if (command.equals("-r")) {
+					String followUserIds = (String) inStream.readObject();
+
+
+				}
+
 				outStream.close();
 				inStream.close();
 				socket.close();
-				
-			} catch (IOException | ClassNotFoundException e) {
+
+			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			
-			
-    	}
-    	
-    }
 
-    
+
+		}
+
+	}
+
+
 
 }
