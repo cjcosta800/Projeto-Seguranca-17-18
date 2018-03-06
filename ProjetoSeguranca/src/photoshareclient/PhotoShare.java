@@ -125,10 +125,7 @@ public class PhotoShare {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		
 		return socket;
-
 	}
 
 }
