@@ -71,17 +71,20 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 			
+				ServerLogic serverLogic = new ServerLogic("../../src/photoshareserver/password.txt");
+				
 				String user = null;
 				String password = null;
 				
-				try {
-					user = (String) inStream.readObject();
-					password = (String) inStream.readObject();
-				}catch (ClassNotFoundException e1) {
-					// TODO: handle exception
-				}
+				user = (String) inStream.readObject();
+				password = (String) inStream.readObject();
 				
-				//TODO Authentication
+				if(!serverLogic.getAuthenticated(user, password)) {
+					outStream.close();
+					inStream.close();
+					socket.close();
+					return;
+				}
 				
 				//TODO method caller
 				
@@ -89,7 +92,7 @@ public class PhotoShareServer {
 				inStream.close();
 				socket.close();
 				
-			} catch (IOException e) {
+			} catch (IOException | ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
