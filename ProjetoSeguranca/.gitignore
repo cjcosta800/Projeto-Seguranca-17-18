@@ -1,1 +1,6 @@
 *.class
+/bin/
+/src/photoshareserver/Photos/
+/src/photoshareserver/passwords.txt
+*.eml
+*.iml
