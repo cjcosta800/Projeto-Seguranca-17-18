@@ -41,61 +41,68 @@ public class PhotoShare {
 			outStream.writeObject(new String(password));
 			Boolean answer = (Boolean)inStream.readObject();
 
+
 			if (answer) {
 
 				if (args.length > 3) {
 
+					String command = args[3];
 					outStream.writeObject(new String(args[3]));
 
-					switch (args[3]) {
-					case "-a" : 
+					if(command.equals("-a")) {
 						//TODO S� passa uma foto de cada vez
-						break;
-					case "-l" :
+					}
+
+					else if(command.equals("-l")) {
 						outStream.writeObject(new String(args[4]));
 						inStream.readObject();
-						break;
-					case "-i" :
+					}
+
+					else if(command.equals("-i")) {
 						outStream.writeObject(new String(args[4]));
 						outStream.writeObject(new String(args[5]));
 						inStream.readObject();
-						break;
-					case "-g" :
+					}
+					else if(command.equals("-g")) {
 						//TODO
+					}
 
-						break;
-					case "-c" :
+					else if(command.equals("-c")) {
 						outStream.writeObject(new String(args[4]));
 						outStream.writeObject(new String(args[5]));
 						outStream.writeObject(new String(args[6]));
 						inStream.readObject();
-						break;
-					case "-L" :
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						inStream.readObject();
-						break;
-					case "-D" :
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						inStream.readObject();
-						break;
-					case "-f" :
-						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
-						inStream.readObject(); 
-						break;
-					case "-r" :
-						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
-						inStream.readObject(); 
-						break;
-					default:
-						System.err.println("Command Unknown");
 					}
-				}
 
-				else {
-					outStream.writeObject(new String("finished"));
+					else if(command.equals("-L")) {
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						inStream.readObject();
+					}
+
+					else if(command.equals("-D")) {
+						outStream.writeObject(new String(args[4]));
+						outStream.writeObject(new String(args[5]));
+						inStream.readObject();
+					}
+
+					else if(command.equals("-f")) {
+						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
+						inStream.readObject(); 
+					}
+
+					else if(command.equals("-r")) {
+						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
+						inStream.readObject(); 
+					}
+
+					else
+						System.err.println("Command Unknown");
 				}
+			}
+
+			else {
+				outStream.writeObject(new String("finished"));
 			}
 
 			outStream.close();
@@ -113,7 +120,7 @@ public class PhotoShare {
 		}
 	}
 
-	
+
 	public static Socket startClient(String ip, int port) {
 
 		Socket socket = null;
