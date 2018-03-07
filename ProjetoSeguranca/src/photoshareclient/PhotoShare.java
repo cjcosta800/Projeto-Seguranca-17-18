@@ -32,6 +32,9 @@ public class PhotoShare {
 		try {
 
 			Socket socket = startClient(ip,port);
+
+			ClientLogic clientLogic = new ClientLogic(socket);
+
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
@@ -50,7 +53,8 @@ public class PhotoShare {
 					outStream.writeObject(new String(args[3]));
 
 					if(command.equals("-a")) {
-						//TODO S� passa uma foto de cada vez
+					    String photos = args[4];
+						clientLogic.sendPhotos(photos);
 					}
 
 					else if(command.equals("-l")) {
