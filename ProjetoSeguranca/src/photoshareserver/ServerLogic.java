@@ -173,7 +173,12 @@ public class ServerLogic {
 	 * @param nomefotos
 	 * @param socket
 	 */
-	public void receivePhotos(String[] nomefotos, Socket socket) {
+	public void receivePhotos(String[] nomefotos, Socket socket) throws IOException, ClassNotFoundException {
+
+		for (String photo: nomefotos) {
+			receivePhoto(photo, socket);
+		}
+
 	}
 
 	/**
