@@ -96,7 +96,12 @@ public class PhotoShareServer {
 				String command = (String) inStream.readObject();
 				// adiciona/copia fotos para o servidor
 				if(command.equals("-a")) {
-					String nomefotos = (String) inStream.readObject();
+					String [] nomefotos = ((String) inStream.readObject()).split(",");
+
+					if(nomefotos.length == 1)
+						serverLogic.receivePhoto(nomefotos[0], socket);
+					else
+						serverLogic.receivePhotos(nomefotos, socket);
 
 					// lista as fotografias do do userid	
 				} else if (command.equals("-l")) {
