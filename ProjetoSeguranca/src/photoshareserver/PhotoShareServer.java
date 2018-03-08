@@ -1,4 +1,4 @@
-package photoshareserver;
+ package photoshareserver;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -71,7 +71,7 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				ServerLogic serverLogic = new ServerLogic("../../src/photoshareserver/password.txt");
+				ServerLogic serverLogic = new ServerLogic("./src/photoshareserver/passwords.txt");
 
 				String user = null;
 				String password = null;
@@ -96,7 +96,12 @@ public class PhotoShareServer {
 				String command = (String) inStream.readObject();
 				// adiciona/copia fotos para o servidor
 				if(command.equals("-a")) {
-					String nomefotos = (String) inStream.readObject();
+					String [] nomefotos = ((String) inStream.readObject()).split(",");
+
+					if(nomefotos.length == 1)
+						serverLogic.receivePhoto(nomefotos[0], socket);
+					else
+						serverLogic.receivePhotos(nomefotos, socket);
 
 					// lista as fotografias do do userid	
 				} else if (command.equals("-l")) {
