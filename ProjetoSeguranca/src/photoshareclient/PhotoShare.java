@@ -24,7 +24,6 @@ public class PhotoShare {
 
 		String currUser = args[0];
 		String password = args[1];
-
 		String[] serverAddress = args[2].split(":");
 		String ip = serverAddress[0];
 		int port = Integer.parseInt(serverAddress[1]);
@@ -33,7 +32,7 @@ public class PhotoShare {
 
 			Socket socket = startClient(ip,port);
 
-			ClientLogic clientLogic = new ClientLogic(socket);
+			ClientLogic clientLogic = new ClientLogic(currUser,socket);
 
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -96,7 +95,7 @@ public class PhotoShare {
 					    clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
                     }
 
-                    else if(command.equals("-f")) {
+                    else if(command.equals("-r")) {
                         String users = args[4];
                         clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
                     }
