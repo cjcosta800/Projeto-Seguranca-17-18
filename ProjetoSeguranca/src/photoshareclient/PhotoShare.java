@@ -22,7 +22,7 @@ public class PhotoShare {
 		}
 
 
-		String userId = args[0];
+		String currUser = args[0];
 		String password = args[1];
 
 		String[] serverAddress = args[2].split(":");
@@ -40,7 +40,7 @@ public class PhotoShare {
 
 			/* Envia o login ao servidor */
 
-			outStream.writeObject(new String(userId));
+			outStream.writeObject(new String(currUser));
 			outStream.writeObject(new String(password));
 			Boolean answer = (Boolean)inStream.readObject();
 
@@ -58,47 +58,48 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-l")) {
-						outStream.writeObject(new String(args[4]));
-						inStream.readObject();
+						String user = args[4];
+						clientLogic.listPhotos(user);
 					}
 
 					else if(command.equals("-i")) {
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						inStream.readObject();
+					    String userid = args[4];
+					    String photoName = args[5];
+						clientLogic.likeDislikeCounter (userid, photoName);
 					}
 					else if(command.equals("-g")) {
-						//TODO
+					    String userid = args[4];
+						clientLogic.backupAllPhotos(userid);
 					}
 
 					else if(command.equals("-c")) {
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						outStream.writeObject(new String(args[6]));
-						inStream.readObject();
+					    String comment = args[4];
+					    String userid = args[5];
+					    String photoName = args[6];
+						clientLogic.commentPhoto(comment,userid,photoName);
 					}
 
 					else if(command.equals("-L")) {
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						inStream.readObject();
+					    String userid = args[4];
+					    String photoName = args[5];
+						clientLogic.likePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-D")) {
-						outStream.writeObject(new String(args[4]));
-						outStream.writeObject(new String(args[5]));
-						inStream.readObject();
+                        String userid = args[4];
+                        String photoName = args[5];
+                        clientLogic.dislikePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-f")) {
-						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
-						inStream.readObject(); 
-					}
+					    String users = args[4];
+					    clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
+                    }
 
-					else if(command.equals("-r")) {
-						outStream.writeObject(new String(args[4])); //Utilizadores s�o separados por virgulas.
-						inStream.readObject(); 
-					}
+                    else if(command.equals("-f")) {
+                        String users = args[4];
+                        clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
+                    }
 
 					else
 						System.err.println("Command Unknown");
