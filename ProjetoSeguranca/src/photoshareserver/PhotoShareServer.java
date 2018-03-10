@@ -122,6 +122,7 @@ public class PhotoShareServer {
 					// copia do servidor para o cliente fotos de userid
 				} else if (command.equals("-g")) {
 					String userId = (String) inStream.readObject();
+					serverLogic.downloadPhotos(userId);
 
 					// adiciona um comentario a fotografia
 				} else if (command.equals("-c")) {
