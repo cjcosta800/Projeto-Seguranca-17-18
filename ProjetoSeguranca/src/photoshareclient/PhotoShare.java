@@ -31,10 +31,9 @@ public class PhotoShare {
 
 			Socket socket = startClient(ip,port);
 
-			ClientLogic clientLogic = new ClientLogic(currUser,socket);
-
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+			ClientLogic clientLogic = new ClientLogic(currUser,socket, outStream, inStream);
 
 			/* Envia o login ao servidor */
 
