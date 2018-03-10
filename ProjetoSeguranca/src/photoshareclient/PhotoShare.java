@@ -69,32 +69,29 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-c")) {
-						String comment = args[4];
-						String userid = args[5];
-						String photoName = args[6];
-						clientLogic.commentPhoto(comment,userid,photoName);
+						clientLogic.commentPhoto(args);
 					}
 
 					else if(command.equals("-L")) {
 						String userid = args[4];
 						String photoName = args[5];
-						clientLogic.likePhoto(userid, photoName);
+//						clientLogic.likePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-D")) {
 						String userid = args[4];
 						String photoName = args[5];
-						clientLogic.dislikePhoto(userid, photoName);
+//						clientLogic.dislikePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-f")) {
 						String users = args[4];
-						clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
+//						clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
 					}
 
 					else if(command.equals("-r")) {
 						String users = args[4];
-						clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
+//						clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
 					}
 
 					else

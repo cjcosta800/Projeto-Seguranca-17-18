@@ -1,7 +1,6 @@
  package photoshareserver;
 
 import java.io.*;
-import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -272,143 +271,66 @@ public class ServerLogic {
 		return sb.toString();
 	}
 
+	/**
+	 *
+	 * @param comment
+	 * @param userId
+	 * @param photoName
+	 */
+    public void commentPhoto(String comment, String userId, String photoName) {
 
-    public void commentPhoto(String comment,String userid,String photoName) {
-
-        String photoNameSplit[] = photoName.split("\\.");
-        String photometapath = userPath + "/" + photoNameSplit[0] + ".txt";
-        BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath,true));
-
-        // writes date as: 04 July 2001 12:08:56
-        SimpleDateFormat sdfDate = new SimpleDateFormat("dd MM yy, HH:mm:ss");
-        Date now = new Date();
-        String date = sdfDate.format(now);
-
-        fwriter.write('[' + date + '] ' + userid + ": " + comment);
-        fwriter.flush();
-        fwriter.close();
-
-    }
-
-    public void likePhoto(String userid, String photoName) {
-
-        String photoNameSplit[] = photoName.split("\\.");
-        String photometapath = userPath + "/" + photoNameSplit[0] + ".txt";
-        BufferedReader buffReader = new BufferedReader(new FileReader(photometapath));
-        BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath);
-
-
-        buffReader.readline(); //consumir a primeira linha, que é desnecessária!
-
-        String likeDislike = buffReader.readLine();
-        String[] counters = likeDislike.split(":"); //contadores de likes e dislikes
-        int dislikeCount = Integer.parseInt(likes[1]);
-        dislikeCount++;
-        String newDislikes = Integer.toString(dislikeCount);
-        counters[1] = newDisLikes;
-
-
-
-    }
-
-    public void dislikePhoto(String userid, String photoName) {
-
-        String photoNameSplit[] = photoName.split("\\.");
-        String photometapath = userPath + "/" + photoNameSplit[0] + ".txt";
-        BufferedReader buffReader = new BufferedReader(new FileReader(photometapath));
-        BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath);
-
-
-        buffReader.readline(); //consumir a primeira linha, que é desnecessária!
-
-        String likeDislike = buffReader.readLine();
-        String[] counters = likeDislike.split(":"); //contadores de likes e dislikes
-        int likeCount = Integer.parseInt(likes[0]);
-        likeCount++;
-        String newLikes = Integer.toString(likeCount);
-        counters[0] = newLikes;
-
-
-
-    }
-
-
-    public void followLocalUser(String users) {
-
-        String[] usersList = users.split(",");
-        String followersPath = "./src/photoshareserver/Photos/" + currUser + "/followers.txt";
+        int isFollower = isFollower(userId);
 
         try {
-            File followers = new File(followersPath);
-            if (!followers.isFile()) {
-                System.out.println("Ficheiro não existe!");
-                return;
-            }
+			if (isFollower == 0) {
 
-            BufferedReader buffReader = new BufferedReader(new FileReader(followers));
-            PrintWriter pw = new PrintWriter(new FileWriter(followersPath,true));
-            String user;
+				String photoMetaPath = getPhotoMetaPath(userId, photoName);
 
-            while((user = buffReader.readLine()) != null) {
-                for (int i = 0; i < usersList.length; i++) {
-                    if (!usersList[i].equals(user.trim())) {
-                        pw.println(user);
-                        pw.flush();
-                    }
-                }
-            }
-            pw.close();
-            buffReader.close();
+				if (photoMetaPath != null) {
 
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+					BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoMetaPath, true));
 
-    public void unfollowLocalUser(String users) { //FALTAM OS ERROS
-        String[] usersList = users.split(",");
-        String followersPath = "./src/photoshareserver/Photos/" + currUser + "/followers.txt";
+					// writes date as: 04/07/2001
+					SimpleDateFormat sdfDate = new SimpleDateFormat("dd/MM/yy");
+					Date now = new Date();
+					String date = sdfDate.format(now);
 
-        try {
-            File followers = new File(followersPath);
-            if (!followers.isFile()) {
-                System.out.println("Ficheiro não existe!");
-                return;
-            }
+					fwriter.write("[" + date + "] " + this.user + ": " + comment + "\n");
+					fwriter.flush();
+					fwriter.close();
 
-            File aux = new File (followersPath + ".tmp");
-            BufferedReader buffReader = new BufferedReader(new FileReader(followers));
-            PrintWriter pw = new PrintWriter(new FileWriter(aux));
-            String user;
+					outputStream.writeObject(new Integer(isFollower));
 
-            while((user = buffReader.readLine()) != null) {
-                for (int i = 0; i < usersList.length; i++) {
-                    if (!user.trim().equals(usersList[i])) {
-                        pw.println(user);
-                        pw.flush();
-                    }
-                }
-            }
-            pw.close();
-            buffReader.close();
+				} else {
+					// Error code 3: photoName isn't a photo
+					outputStream.writeObject(new Integer(3));
+				}
 
-            if (!followers.delete()) {
-                System.out.println("Ficheiro não foi removido!");
-                return;
-            }
+			} else {
+				outputStream.writeObject(new Integer(isFollower));
+			}
 
-            if (!aux.renameTo(followers)) {
-                System.out.println("Nome do ficheiro não foi alterado!");
-            }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+	}
+
+	/**
+	 *
+	 * @param userid
+	 * @param photoName
+	 * @return
+	 */
+	private String getPhotoMetaPath(String userid, String photoName) {
+
+		String photoNameNoExtension = photoName.split("\\.")[0];
+		String photoMetaPath = serverPath + userid + "/" + photoNameNoExtension + ".txt";
+
+		File photo = new File(photoMetaPath);
+
+		return photo.isFile() ? photoMetaPath : null;
+	}
 
 	/**
 	 *

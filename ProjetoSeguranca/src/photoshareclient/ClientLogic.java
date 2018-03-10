@@ -3,6 +3,7 @@ package photoshareclient;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ClientLogic {
 
@@ -141,11 +142,65 @@ public class ClientLogic {
 
 	}
 
+    /**
+     * Adds a new comment to photoName
+     * @param args
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public void commentPhoto(String[] args) throws IOException, ClassNotFoundException {
 
+        int argsLength = args.length;
+        String photoName = args[argsLength - 1];
+        String userId = args[argsLength - 2];
 
+        String comment = getComment(args);
 
+        outStream.writeObject(new String(comment));
+        outStream.writeObject(new String(userId));
+        outStream.writeObject(new String(photoName));
+
+        int success = (Integer) inStream.readObject();
+
+        switch (success) {
+            case 1:
+                System.err.println("You don't have permissions to add comments to " + userId + " photos.");
+                break;
+
+            case 2:
+                System.err.println("User " + userId + " doesn't exist.");
+                break;
+
+            case 3:
+                System.err.println("Photo " + photoName + " doesn't exist.");
+                break;
+
+            default:
+                System.out.println("New comment added to photo " + photoName + ".");
+                break;
+        }
+
+    }
+
+    /**
+     * Converts comments from args to String
+     * @param args
+     * @return comment in a string
+     */
+    private String getComment(String[] args) {
+
+        String[] comments = Arrays.copyOfRange(args, 4, args.length - 2);
+
+        StringBuilder sb = new StringBuilder();
+
+        for (String comment: comments) {
+            sb.append(comment + " ");
+        }
+
+        sb.deleteCharAt(sb.length() - 1);
+
+        return sb.toString();
+    }
 }
 
-//LER FICHEIRO TODO, PROCURAR USERS A REMOVER, NAO ABRIR COM PARAMETRO A TRUE, ESCREVER DE NOVO O FICHEIRO SEM INCLUIR O USER QUE ACABAMOS DE REMOVER.
-//REESCREVER O FICHEIRO SEM O USER QUE SE VAI EXCLUIR.
 
