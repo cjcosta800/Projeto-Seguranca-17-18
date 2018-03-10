@@ -6,15 +6,23 @@ import java.util.ArrayList;
 
 public class ClientLogic {
 
-	private Socket socket;
 	private String currUser;
+	private ObjectOutputStream outStream;
+	private ObjectInputStream inStream;
 
-	public ClientLogic(String currUser, Socket socket) {
+	public ClientLogic(String currUser, Socket socket, ObjectOutputStream outStream, ObjectInputStream inStream) {
 		this.currUser = currUser;
-		this.socket = socket;
+		this.outStream = outStream;
+		this.inStream = inStream;
 	}
 
-	public void addPhotos(String args[]) throws IOException {
+    /**
+     * Handler for command addPhotos (-a)
+     * @param args args coming from main
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+	public void addPhotos(String args[]) throws IOException, ClassNotFoundException {
 
 	    int counter = 4;
         ArrayList<String> photonames = new ArrayList<>();
@@ -25,60 +33,72 @@ public class ClientLogic {
             counter++;
         }
 
+		System.out.println("Sending " + photonames.size() + " photos.");
         sendPhotos(photonames);
-
-        System.out.println("Success!");
+        System.out.println("Task completed.");
 
 	}
 
-    private void sendPhotos(ArrayList<String> photonames) throws IOException {
+    /**
+     * Sends 1 or more photos to client
+     * @param photoNames list containing all photo names
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void sendPhotos(ArrayList<String> photoNames) throws IOException, ClassNotFoundException {
 
-        ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
         FileInputStream fileOut;
-        BufferedInputStream in;
+        BufferedInputStream readPhotoBytes;
 
         File photo;
         String photoName;
         Boolean photoExists;
         byte buffer[];
 
-	    outStream.writeInt(photonames.size());
 
-        for (int i = 0; i < photonames.size(); i++) {
+	    outStream.writeInt(photoNames.size());
 
-            photoName = photonames.get(i);
+	    // iterates through all photo names and sends each one
+        // TODO: replace with foreach
+        for (int i = 0; i < photoNames.size(); i++) {
+
+            photoName = photoNames.get(i);
 
             photo = new File(photoName);
 
-            if(photo.exists()) {
+			// Photo exists locally
+			if(photo.exists()) {
 
-                outStream.writeObject(new String(photoName));
+				// Send Photo name
+				outStream.writeObject(new String(photoName));
 
-                photoExists = inStream.readBoolean();
-
+                photoExists = (boolean) inStream.readObject();
+				// Photo doesn't exist on server
                 if (!photoExists) {
 
                     outStream.writeInt((int) photo.length());
 
                     fileOut = new FileInputStream(photo);
-                    in = new BufferedInputStream(fileOut);
-
+                    readPhotoBytes = new BufferedInputStream(fileOut);
+                    // byte buffer to send the photo
                     buffer = new byte[(int) photo.length()];
-
-                    in.read(buffer, 0, buffer.length);
-
+                    // reads bytes from photo and puts them on the byte buffer
+                    readPhotoBytes.read(buffer, 0, buffer.length);
+                    // writes byte buffer to output stream (sends byte buffer to server)
                     outStream.write(buffer, 0, buffer.length);
                     outStream.flush();
 
-                    fileOut.close();
-                    in.close();
+                    System.out.println("Photo " + photoName + " was successfully sent.");
+
+					fileOut.close();
+					readPhotoBytes.close();
 
                 } else {
-                    System.err.println("Photo " + photoName + " already exists.");
+                    System.err.println("Photo " + photoName + " is already present at the server.");
                 }
             } else {
-                outStream.writeObject(new String("skip"));
+                // photo is not present on the client side. Maybe user misspelled photo name.
+			    outStream.writeObject(new String("skip"));
 
                 System.err.println("Photo " + photoName + " not found. Typo?\nSkipping...");
             }
