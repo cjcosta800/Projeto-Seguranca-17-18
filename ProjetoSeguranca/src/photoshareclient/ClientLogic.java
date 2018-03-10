@@ -1,13 +1,8 @@
 package photoshareclient;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientLogic {
 
@@ -19,11 +14,83 @@ public class ClientLogic {
 		this.socket = socket;
 	}
 
-	public void sendPhotos(String photos) {
+	public void addPhotos(String args[]) throws IOException {
+
+	    int counter = 4;
+        ArrayList<String> photonames = new ArrayList<>();
+
+        while (counter < args.length) {
+            photonames.add(args[counter]);
+
+            counter++;
+        }
+
+        sendPhotos(photonames);
+
+        System.out.println("Success!");
 
 	}
 
-	public void listPhotos (String user) {
+    private void sendPhotos(ArrayList<String> photonames) throws IOException {
+
+        ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
+        FileInputStream fileOut;
+        BufferedInputStream in;
+
+        File photo;
+        String photoName;
+        Boolean photoExists;
+        byte buffer[];
+
+	    outStream.writeInt(photonames.size());
+
+        for (int i = 0; i < photonames.size(); i++) {
+
+            photoName = photonames.get(i);
+
+            photo = new File(photoName);
+
+            if(photo.exists()) {
+
+                outStream.writeObject(new String(photoName));
+
+                photoExists = inStream.readBoolean();
+
+                if (!photoExists) {
+
+                    outStream.writeInt((int) photo.length());
+
+                    fileOut = new FileInputStream(photo);
+                    in = new BufferedInputStream(fileOut);
+
+                    buffer = new byte[(int) photo.length()];
+
+                    in.read(buffer, 0, buffer.length);
+
+                    outStream.write(buffer, 0, buffer.length);
+                    outStream.flush();
+
+                    fileOut.close();
+                    in.close();
+
+                } else {
+                    System.err.println("Photo " + photoName + " already exists.");
+                }
+            } else {
+                outStream.writeObject(new String("skip"));
+
+                System.err.println("Photo " + photoName + " not found. Typo?\nSkipping...");
+            }
+
+        }
+
+        outStream.close();
+        inStream.close();
+
+    }
+
+    public void listPhotos (String user) {
 
 
 	}

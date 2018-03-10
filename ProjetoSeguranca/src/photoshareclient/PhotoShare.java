@@ -27,7 +27,6 @@ public class PhotoShare {
 		String[] serverAddress = args[2].split(":");
 		String ip = serverAddress[0];
 		int port = Integer.parseInt(serverAddress[1]);
-
 		try {
 
 			Socket socket = startClient(ip,port);
@@ -52,8 +51,7 @@ public class PhotoShare {
 					outStream.writeObject(new String(args[3]));
 
 					if(command.equals("-a")) {
-					    String photos = args[4];
-						clientLogic.sendPhotos(photos);
+						clientLogic.addPhotos(args);
 					}
 
 					else if(command.equals("-l")) {
@@ -62,43 +60,43 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-i")) {
-					    String userid = args[4];
-					    String photoName = args[5];
+						String userid = args[4];
+						String photoName = args[5];
 						clientLogic.likeDislikeCounter (userid, photoName);
 					}
 					else if(command.equals("-g")) {
-					    String userid = args[4];
+						String userid = args[4];
 						clientLogic.backupAllPhotos(userid);
 					}
 
 					else if(command.equals("-c")) {
-					    String comment = args[4];
-					    String userid = args[5];
-					    String photoName = args[6];
+						String comment = args[4];
+						String userid = args[5];
+						String photoName = args[6];
 						clientLogic.commentPhoto(comment,userid,photoName);
 					}
 
 					else if(command.equals("-L")) {
-					    String userid = args[4];
-					    String photoName = args[5];
+						String userid = args[4];
+						String photoName = args[5];
 						clientLogic.likePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-D")) {
-                        String userid = args[4];
-                        String photoName = args[5];
-                        clientLogic.dislikePhoto(userid, photoName);
+						String userid = args[4];
+						String photoName = args[5];
+						clientLogic.dislikePhoto(userid, photoName);
 					}
 
 					else if(command.equals("-f")) {
-					    String users = args[4];
-					    clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
-                    }
+						String users = args[4];
+						clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
+					}
 
-                    else if(command.equals("-r")) {
-                        String users = args[4];
-                        clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
-                    }
+					else if(command.equals("-r")) {
+						String users = args[4];
+						clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
+					}
 
 					else
 						System.err.println("Command Unknown");
@@ -117,9 +115,9 @@ public class PhotoShare {
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found!");
 			System.exit(1);
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
