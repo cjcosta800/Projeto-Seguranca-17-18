@@ -12,12 +12,14 @@ public class ServerLogic {
 	private HashMap<String, String> userPwd;
 	private String user;
 	private String userPath;
+	private ObjectOutputStream outputStream;
+	private ObjectInputStream inputStream;
 
-
-	public ServerLogic(String passwordsPath) {
+	public ServerLogic(String passwordsPath, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
 		this.passwordsPath = passwordsPath;
-
+		this.outputStream = outputStream;
+		this.inputStream = inputStream;
 
 	}
 
@@ -113,45 +115,39 @@ public class ServerLogic {
 
 	/**
 	 * Receives one file from the client
-	 * @param nomefoto
-	 * @param socket
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public void receivePhoto(String nomefoto, Socket socket) throws IOException, ClassNotFoundException {
-
-		ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-		ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+	public void receivePhoto() throws IOException, ClassNotFoundException {
 
 		// recebe "pergunta" se o cliente pode comecar a enviar. Particularmente importante para o caso de varias fotos
-		inputStream.readObject();
+		String photoName = (String) inputStream.readObject();
 
-		File newphoto = new File(userPath + "/" + nomefoto);
+		// caso o client indique que tem de fazer skip a esta foto (foto nao existe no client)
+		if (photoName.equals("skip")) {
+			return;
+		}
 
-		if(!newphoto.exists()) {
+		File newPhoto = new File(userPath + "/" + photoName);
 
-			outputStream.writeBoolean(true);
+		if(!newPhoto.exists()) {
 
-			// recebe nome e tamanho da foto
-			String photo = (String) inputStream.readObject();
-			Integer photosize = (Integer) inputStream.readObject();
+			outputStream.writeObject(new Boolean(false));
+			// recebe tamanho da foto
+			int photoSize = inputStream.readInt();
 
-			newphoto.createNewFile();
-			byte[] buffer = new byte[photosize];
+			newPhoto.createNewFile();
+			byte[] buffer = new byte[photoSize];
 
-			FileOutputStream fos = new FileOutputStream(newphoto);
+			FileOutputStream fos = new FileOutputStream(newPhoto);
 			BufferedOutputStream writefile = new BufferedOutputStream(fos);
 			int byteread = 0;
 
 			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
 				writefile.write(buffer, 0, byteread);
 			}
-
 			// writes new meta file
-			createPhotoMetaFile(photo);
-
-			// a recepcao foi um sucesso
-			outputStream.writeBoolean(true);
+			createPhotoMetaFile(photoName);
 
 			writefile.flush();
 			writefile.close();
@@ -159,24 +155,21 @@ public class ServerLogic {
 
 		} else {
 			// caso a foto ja esteja presente no servidor... envia-se uma mensagem de erro, neste caso bool false
-			outputStream.writeBoolean(false);
+			outputStream.writeObject(new Boolean (true));
 		}
-
-		outputStream.close();
-		inputStream.close();
-
 
 	}
 
 	/**
 	 * Receives multiple photos from the client
-	 * @param nomefotos
-	 * @param socket
+	 * @param numPhotos
 	 */
-	public void receivePhotos(String[] nomefotos, Socket socket) throws IOException, ClassNotFoundException {
+	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException {
 
-		for (String photo: nomefotos) {
-			receivePhoto(photo, socket);
+		for (int i = 0; i < numPhotos; i++) {
+
+			receivePhoto();
+
 		}
 
 	}
@@ -194,24 +187,28 @@ public class ServerLogic {
 		 * Line 4: Comment ...
 		 */
 
-		String photometapath = userPath + "/" + photoName.split(".")[0] + ".txt";
+        String photoNameSplit[] = photoName.split("\\.");
+
+		String photometapath = userPath + "/" + photoNameSplit[0] + ".txt";
 
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(photometapath));
+		BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath));
 
 		// writes date as: 04 July 2001 12:08:56
-		SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
+		SimpleDateFormat sdfDate = new SimpleDateFormat("dd MM yy, HH:mm:ss");
 		Date now = new Date();
 		String date = sdfDate.format(now);
 
 		// write current date
-		writer.write(now + "\n");
+		fwriter.write(now + "\n");
 		// write likes and dislikes (both starting at 0)
-		writer.write("0:0\n");
+		fwriter.write("0:0\n");
 
-		writer.close();
+		fwriter.flush();
+
+		fwriter.close();
 
 	}
 }

@@ -21,7 +21,7 @@ public class PhotoShareServer {
 
 		int socket = Integer.parseInt(args[0]);
 
-		System.out.println("Listening for new connections...");
+		System.out.println("Listening for new connections at " + args[0] + "...");
 		PhotoShareServer photoShareServer = new PhotoShareServer();
 		photoShareServer.startServer(socket);
 
@@ -71,7 +71,7 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				ServerLogic serverLogic = new ServerLogic("./src/photoshareserver/passwords.txt");
+				ServerLogic serverLogic = new ServerLogic("./src/photoshareserver/passwords.txt", outStream, inStream);
 
 				String user = null;
 				String password = null;
@@ -96,12 +96,15 @@ public class PhotoShareServer {
 				String command = (String) inStream.readObject();
 				// adiciona/copia fotos para o servidor
 				if(command.equals("-a")) {
-					String [] nomefotos = ((String) inStream.readObject()).split(",");
+					int numphotos = inStream.readInt();
 
-					if(nomefotos.length == 1)
-						serverLogic.receivePhoto(nomefotos[0], socket);
+					System.out.println("Receiving " + numphotos + " photos from user " + user);
+					if(numphotos == 1)
+						serverLogic.receivePhoto();
 					else
-						serverLogic.receivePhotos(nomefotos, socket);
+						serverLogic.receivePhotos(numphotos);
+
+					System.out.println("All photos added.");
 
 					// lista as fotografias do do userid	
 				} else if (command.equals("-l")) {
@@ -146,6 +149,8 @@ public class PhotoShareServer {
 				outStream.close();
 				inStream.close();
 				socket.close();
+
+				System.out.println("Connection closed with user " + user + ".");
 
 			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
