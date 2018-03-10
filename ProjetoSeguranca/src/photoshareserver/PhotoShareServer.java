@@ -129,6 +129,8 @@ public class PhotoShareServer {
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
 
+					serverLogic.commentPhoto(comment,userId,photo);
+
 					// adiciona um Like à fotografia
 				} else if (command.equals("-L")) {
 					String userId = (String) inStream.readObject();

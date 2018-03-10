@@ -141,94 +141,9 @@ public class ClientLogic {
 
 	}
 
-	public void commentPhoto(String comment,String userid,String photoName) {
 
-	}
 
-	public void likePhoto(String userid, String photoName) {
 
-	}
-
-	public void dislikePhoto(String userid, String photoName) {
-
-	}
-
-	public void followLocalUser(String users) {
-
-		String[] usersList = users.split(",");
-		String followersPath = "./src/photoshareserver/Photos/" + currUser + "/followers.txt";
-
-		try {
-			File followers = new File(followersPath);
-			if (!followers.isFile()) {
-				System.out.println("Ficheiro não existe!");
-				return;
-			}
-
-			BufferedReader buffReader = new BufferedReader(new FileReader(followers));
-			PrintWriter pw = new PrintWriter(new FileWriter(followers));
-			String user;
-
-			while((user = buffReader.readLine()) != null) {
-				for (int i = 0; i < usersList.length; i++) {
-					if (!user.trim().equals(usersList[i])) {
-						pw.println(user);
-						pw.flush();
-					}
-				}
-			}
-			pw.close();
-			buffReader.close();
-
-		} catch (FileNotFoundException ex) {
-			ex.printStackTrace();
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-	}
-
-	public void unfollowLocalUser(String users) { //FALTAM OS ERROS
-		String[] usersList = users.split(",");
-		String followersPath = "./src/photoshareserver/Photos/" + currUser + "/followers.txt";
-
-		try {
-			File followers = new File(followersPath);
-			if (!followers.isFile()) {
-				System.out.println("Ficheiro não existe!");
-				return;
-			}
-
-			File aux = new File (followersPath + ".tmp");
-			BufferedReader buffReader = new BufferedReader(new FileReader(followers));
-			PrintWriter pw = new PrintWriter(new FileWriter(aux));
-			String user;
-
-			while((user = buffReader.readLine()) != null) {
-				for (int i = 0; i < usersList.length; i++) {
-					if (!user.trim().equals(usersList[i])) {
-						pw.println(user);
-						pw.flush();
-					}
-				}
-			}
-			pw.close();
-			buffReader.close();
-
-			if (!followers.delete()) {
-				System.out.println("Ficheiro não foi removido!");
-				return;
-			}
-
-			if (!aux.renameTo(followers)) {
-				System.out.println("Nome do ficheiro não foi alterado!");
-			}
-
-		} catch (FileNotFoundException ex) {
-			ex.printStackTrace();
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-	}
 }
 
 //LER FICHEIRO TODO, PROCURAR USERS A REMOVER, NAO ABRIR COM PARAMETRO A TRUE, ESCREVER DE NOVO O FICHEIRO SEM INCLUIR O USER QUE ACABAMOS DE REMOVER.
