@@ -198,12 +198,12 @@ public class ServerLogic {
 		BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath));
 
 		// writes date as: 04 July 2001 12:08:56
-		SimpleDateFormat sdfDate = new SimpleDateFormat("dd MM yy, HH:mm:ss");
+		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");
 		Date now = new Date();
 		String date = sdfDate.format(now);
 
 		// write current date
-		fwriter.write(now + "\n");
+		fwriter.write(date + "\n");
 		// write likes and dislikes (both starting at 0)
 		fwriter.write("0:0\n");
 
