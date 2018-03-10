@@ -216,7 +216,60 @@ public class ServerLogic {
 
 	public void listPhotos(String userId) {
 
+		try {
+		int isFollower = isFollower(userId);
 
+		if (isFollower == 0) {
+			outputStream.writeObject(new Integer(isFollower));
+
+			String photoList = getPhotoList(serverPath + userId);
+
+			outputStream.writeObject(photoList);
+		} else {
+
+			outputStream.writeObject(new Integer(isFollower));
+
+		}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 *
+	 * @param userIdPath
+	 * @return
+	 */
+	private String getPhotoList(String userIdPath) {
+
+		StringBuilder sb = new StringBuilder();
+
+		File folder = new File(userIdPath);
+		File[] listOfFiles = folder.listFiles();
+
+		int counter = 0;
+
+		for (File file: listOfFiles) {
+
+			if (file.isFile()) {
+
+				String photoName = file.getName();
+
+				if (!photoName.split("\\.")[1].equals("txt")) {
+
+					if (counter % 4 == 0) {
+						sb.append(photoName + "\n");
+					} else {
+						sb.append(photoName + " ");
+					}
+
+				}
+			}
+		}
+
+		return sb.toString();
 	}
 
 	/**

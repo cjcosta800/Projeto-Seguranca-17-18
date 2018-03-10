@@ -105,13 +105,31 @@ public class ClientLogic {
 
         }
 
-        outStream.close();
-        inStream.close();
-
     }
 
-    public void listPhotos (String user) {
+    public void listPhotos (String user) throws IOException, ClassNotFoundException {
 
+        System.out.println("Getting photo list of user " + user);
+
+		outStream.writeObject(new String(user));
+
+		/* isFollower = 0: yes, localuser is follower of user
+		 * isFollower = 1: no, localuser  is not follower of user
+		 * isFollower = 2: user doesn't exist
+		 */
+		int isFollower = (Integer) inStream.readObject();
+		if (isFollower == 0) {
+			String photoList = (String) inStream.readObject();
+
+			System.out.println(photoList);
+
+		} else if(isFollower == 1){
+			System.err.println("You don't have permissions to check " + user + " photos list.");
+		} else if(isFollower == 2){
+			System.err.println("User " + user + " doesn't exist.");
+		} else {
+		    System.out.println("Some error occurred on the server side.");
+        }
 
 	}
 

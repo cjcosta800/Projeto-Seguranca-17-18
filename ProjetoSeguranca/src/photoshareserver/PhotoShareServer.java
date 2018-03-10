@@ -108,7 +108,11 @@ public class PhotoShareServer {
 
 					// lista as fotografias do do userid	
 				} else if (command.equals("-l")) {
-					String userId = (String) inStream.readObject();
+                    String userId = (String) inStream.readObject();
+
+                    System.out.println(user + " is asking for " + userId + "'s photo list.");
+
+                    serverLogic.listPhotos(userId);
 
 					// devolve comentarios e o numero de likes da foto	
 				} else if (command.equals("-i")) {
