@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 public class ServerLogic {
 
+	private final String serverPath = "./src/photoshareserver/Photos/";
 	private String passwordsPath;
 	private HashMap<String, String> userPwd;
 	private String user;
@@ -41,7 +42,7 @@ public class ServerLogic {
 
 			if(userPwd.get(user).equals(password)) {
 				this.user = user;
-				this.userPath = "./src/photoshareserver/Photos/" + user;
+				this.userPath = serverPath + user;
 				return true;
 			}
 			else
@@ -64,9 +65,9 @@ public class ServerLogic {
 	 * @throws IOException
 	 */
 	private boolean registerUser(String user, String password) throws IOException {
-		
-		File file = new File("./src/photoshareserver/Photos/" + user + "/followers.txt");
-		this.userPath = "./src/photoshareserver/Photos/" + user;
+
+		this.userPath = serverPath + user;
+		File file = new File(userPath + "/followers.txt");
 
 		file.getParentFile().mkdirs();
 		file.createNewFile();
@@ -209,6 +210,57 @@ public class ServerLogic {
 		fwriter.flush();
 
 		fwriter.close();
+
+	}
+
+
+	public void listPhotos(String userId) {
+
+
+	}
+
+	/**
+	 *
+	 * @param userId
+	 * @return
+	 */
+	private int isFollower(String userId) {
+
+	    // if userId is the localuser, he got permissions
+	    if (userId.equals(this.user)) {
+	        return 0;
+        }
+
+        FileReader userIdFollowers = null;
+
+        try {
+
+            userIdFollowers = new FileReader(serverPath + userId + "/followers.txt");
+
+            BufferedReader filereader = new BufferedReader(userIdFollowers);
+
+            String line = filereader.readLine();
+            boolean found = false;
+
+            while (line != null && !found) {
+
+                if (user.equals(line)) {
+                    found = true;
+                }
+
+                line = filereader.readLine();
+            }
+
+            return found ? 0 : 1;
+
+
+        } catch (FileNotFoundException e) {
+            // user doesn't exist
+            return 2;
+        } catch (IOException e) {
+            System.err.println("IO Error occurred while reading followers file.");
+            return 3;
+        }
 
 	}
 }
