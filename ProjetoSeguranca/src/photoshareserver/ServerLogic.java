@@ -512,27 +512,14 @@ public class ServerLogic {
 		String photoCommentsTmp = userIdPath + "/" + photo + "-comments.txt";
 
 		try {
-			BufferedReader freader = new BufferedReader(new FileReader(photoMetaFile));
 			BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoCommentsTmp));
 
-			// first line is "trash"
-			freader.readLine();
-			String line = freader.readLine();
+			String comments = getComments(photoMetaFile);
 
-			int likes = Integer.parseInt(line.split(":")[0]);
-			int dislikes = Integer.parseInt(line.split(":")[1]);
+			fwriter.write(comments);
 
-			fwriter.write("Likes: " + likes + "\nDislikes: " + dislikes);
-
-			// read comments
-			line = freader.readLine();
-			while(line != null) {
-				fwriter.write(line + "\n");
-				line = freader.readLine();
-			}
 			fwriter.flush();
 			fwriter.close();
-			freader.close();
 
 			// sends photo comments and then deletes it
 			File photoComments = new File(photoCommentsTmp);
@@ -547,6 +534,33 @@ public class ServerLogic {
 			e.printStackTrace();
 		}
 
+	}
+
+	private String getComments(String photoMetaFilePath) throws IOException {
+
+		StringBuilder sb = new StringBuilder();
+		BufferedReader freader = new BufferedReader(new FileReader(photoMetaFilePath));
+
+		// first line is "trash"
+		freader.readLine();
+		String line = freader.readLine();
+
+		int likes = Integer.parseInt(line.split(":")[0]);
+		int dislikes = Integer.parseInt(line.split(":")[1]);
+
+		sb.append("Likes: " + likes + "\nDislikes: " + dislikes + "\n");
+		sb.append("Comments:\n");
+		// read comments
+		line = freader.readLine();
+		while(line != null) {
+			sb.append(line + "\n");
+			line = freader.readLine();
+		}
+
+		freader.close();
+
+
+		return sb.toString();
 	}
 
 }
