@@ -121,6 +121,8 @@ public class PhotoShareServer {
 					String userId = (String) inStream.readObject();
 					String photoName = (String) inStream.readObject();
 
+					serverLogic.fetchComments(userId, photoName);
+
 					// copia do servidor para o cliente fotos de userid
 				} else if (command.equals("-g")) {
 					String userId = (String) inStream.readObject();

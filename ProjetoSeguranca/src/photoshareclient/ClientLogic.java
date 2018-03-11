@@ -134,9 +134,42 @@ public class ClientLogic {
 
 	}
 
-	public void likeDislikeCounter (String userid, String photoName) {
+    /**
+     * Fetches photoName photos and prints them
+     * @param userId
+     * @param photoName
+     */
+	public void fetchComments(String userId, String photoName) {
 
-	}
+        System.out.println("Getting " + photoName + " comments:");
+
+        try {
+            outputStream.writeObject(new String(userId));
+            outputStream.writeObject(new String(photoName));
+
+            int isFollower = (Integer) inputStream.readObject();
+            if (isFollower == 0) {
+                int isSuccessful = (Integer) inputStream.readObject();
+                if(isSuccessful == 0) {
+                    String comments = (String) inputStream.readObject();
+                    System.out.print(comments);
+                } else {
+                    System.err.println("Photo " + photoName + " doesn't exist.");
+                }
+
+            } else if (isFollower == 1) {
+                System.err.println("You don't have permissions to check " + userId + " photos comments.");
+            } else if (isFollower == 2) {
+                System.err.println("User " + userId + " doesn't exist.");
+            }
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
 	public void getPhotos(String userId) throws IOException, ClassNotFoundException {
 

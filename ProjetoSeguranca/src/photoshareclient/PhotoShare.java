@@ -59,9 +59,9 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-i")) {
-						String userid = args[4];
+						String userId = args[4];
 						String photoName = args[5];
-						clientLogic.likeDislikeCounter (userid, photoName);
+						clientLogic.fetchComments(userId, photoName);
 					}
 					else if(command.equals("-g")) {
 						String userId = args[4];

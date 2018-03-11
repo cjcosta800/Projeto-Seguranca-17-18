@@ -262,6 +262,38 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Fetches photo comments, likes and dislikes and sends to server
+	 * @param userId
+	 * @param photoName
+	 */
+	public void fetchComments(String userId, String photoName) {
+
+		try {
+			int isFollower = isFollower(userId);
+
+			outputStream.writeObject(new Integer(isFollower));
+			if (isFollower == 0) {
+				String photoMetaPath = getPhotoMetaPath(userId, photoName);
+				if(photoMetaPath != null) {
+					String comments = getComments(photoMetaPath);
+					outputStream.writeObject(new Integer(0));
+
+					outputStream.writeObject(new String(comments));
+				} else {
+					// error 3 - photo doesn't exist on server
+					outputStream.writeObject(new Integer(3));
+				}
+			} else {
+				outputStream.writeObject(new Integer(isFollower));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
+	}
+
+	/**
 	 * Loads users and passwords from the passwords file (provided by passwordsPath)
 	 * @return HashMap<User, Password> containing all users and corresponding password
 	 *
@@ -536,6 +568,12 @@ public class ServerLogic {
 
 	}
 
+	/**
+	 * Gets photo comments, likes and dislikes from photo "meta file" and puts them on a String
+	 * @param photoMetaFilePath
+	 * @return string containing comments, likes and dislikes
+	 * @throws IOException
+	 */
 	private String getComments(String photoMetaFilePath) throws IOException {
 
 		StringBuilder sb = new StringBuilder();
@@ -562,5 +600,4 @@ public class ServerLogic {
 
 		return sb.toString();
 	}
-
 }
