@@ -8,13 +8,13 @@ import java.util.Arrays;
 public class ClientLogic {
 
 	private String currUser;
-	private ObjectOutputStream outStream;
-	private ObjectInputStream inStream;
+	private ObjectOutputStream outputStream;
+	private ObjectInputStream inputStream;
 
 	public ClientLogic(String currUser, Socket socket, ObjectOutputStream outStream, ObjectInputStream inStream) {
 		this.currUser = currUser;
-		this.outStream = outStream;
-		this.inStream = inStream;
+		this.outputStream = outStream;
+		this.inputStream = inStream;
 	}
 
     /**
@@ -57,7 +57,7 @@ public class ClientLogic {
         byte buffer[];
 
 
-	    outStream.writeInt(photoNames.size());
+	    outputStream.writeInt(photoNames.size());
 
 	    // iterates through all photo names and sends each one
         // TODO: replace with foreach
@@ -71,13 +71,13 @@ public class ClientLogic {
 			if(photo.exists()) {
 
 				// Send Photo name
-				outStream.writeObject(new String(photoName));
+				outputStream.writeObject(new String(photoName));
 
-                photoExists = (boolean) inStream.readObject();
+                photoExists = (boolean) inputStream.readObject();
 				// Photo doesn't exist on server
                 if (!photoExists) {
 
-                    outStream.writeInt((int) photo.length());
+                    outputStream.writeInt((int) photo.length());
 
                     fileOut = new FileInputStream(photo);
                     readPhotoBytes = new BufferedInputStream(fileOut);
@@ -86,8 +86,8 @@ public class ClientLogic {
                     // reads bytes from photo and puts them on the byte buffer
                     readPhotoBytes.read(buffer, 0, buffer.length);
                     // writes byte buffer to output stream (sends byte buffer to server)
-                    outStream.write(buffer, 0, buffer.length);
-                    outStream.flush();
+                    outputStream.write(buffer, 0, buffer.length);
+                    outputStream.flush();
 
                     System.out.println("Photo " + photoName + " was successfully sent.");
 
@@ -99,7 +99,7 @@ public class ClientLogic {
                 }
             } else {
                 // photo is not present on the client side. Maybe user misspelled photo name.
-			    outStream.writeObject(new String("skip"));
+			    outputStream.writeObject(new String("skip"));
 
                 System.err.println("Photo " + photoName + " not found. Typo?\nSkipping...");
             }
@@ -112,15 +112,15 @@ public class ClientLogic {
 
         System.out.println("Getting photo list of user " + user);
 
-		outStream.writeObject(new String(user));
+		outputStream.writeObject(new String(user));
 
 		/* isFollower = 0: yes, localuser is follower of user
 		 * isFollower = 1: no, localuser  is not follower of user
 		 * isFollower = 2: user doesn't exist
 		 */
-		int isFollower = (Integer) inStream.readObject();
+		int isFollower = (Integer) inputStream.readObject();
 		if (isFollower == 0) {
-			String photoList = (String) inStream.readObject();
+			String photoList = (String) inputStream.readObject();
 
 			System.out.println(photoList);
 
@@ -138,7 +138,42 @@ public class ClientLogic {
 
 	}
 
-	public void backupAllPhotos(String userid) {
+	public void getPhotos(String userId) throws IOException, ClassNotFoundException {
+
+        System.out.println("Getting " + userId + " photos...");
+
+        outputStream.writeObject(new String(userId));
+
+        int isFollower = (Integer) inputStream.readObject();
+
+        if (isFollower == 0) {
+            String receivePath = "./" + userId + "/";
+            File receiveP = new File(receivePath);
+
+            if (!receiveP.isDirectory()) {
+                receiveP.mkdirs();
+            }
+
+            int numPhotos = (Integer) inputStream.readObject();
+
+            for (int i = 0; i < numPhotos; i++) {
+                // receive photo
+                receiveFile(receivePath);
+                // receive comments
+                receiveFile(receivePath);
+
+            }
+
+            System.out.println("Received " + numPhotos + " photos from server.\nPhotos are located at " +
+                    receiveP.getAbsolutePath());
+
+        } else if(isFollower == 1){
+            System.err.println("You don't have permissions to get " + userId + " photos.");
+        } else if(isFollower == 2){
+            System.err.println("User " + userId + " doesn't exist.");
+        } else {
+            System.out.println("Some error occurred on the server side.");
+        }
 
 	}
 
@@ -156,11 +191,11 @@ public class ClientLogic {
 
         String comment = getComment(args);
 
-        outStream.writeObject(new String(comment));
-        outStream.writeObject(new String(userId));
-        outStream.writeObject(new String(photoName));
+        outputStream.writeObject(new String(comment));
+        outputStream.writeObject(new String(userId));
+        outputStream.writeObject(new String(photoName));
 
-        int success = (Integer) inStream.readObject();
+        int success = (Integer) inputStream.readObject();
 
         switch (success) {
             case 1:
@@ -200,6 +235,41 @@ public class ClientLogic {
         sb.deleteCharAt(sb.length() - 1);
 
         return sb.toString();
+    }
+
+    /**
+     *
+     * @param receivePath Must end with "dir/"
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void receiveFile(String receivePath) throws IOException, ClassNotFoundException {
+
+        String fileName = (String) inputStream.readObject();
+        File newFile = new File(receivePath + fileName);
+
+        if(newFile.exists()) {
+            outputStream.writeObject(new Boolean(false));
+        } else {
+            outputStream.writeObject(new Boolean(true));
+            // recebe tamanho da foto
+            int photoSize = (Integer) inputStream.readObject();
+
+            newFile.createNewFile();
+            byte[] buffer = new byte[photoSize];
+
+            FileOutputStream fos = new FileOutputStream(newFile);
+            BufferedOutputStream writefile = new BufferedOutputStream(fos);
+            int byteread = 0;
+
+            while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
+                writefile.write(buffer, 0, byteread);
+            }
+            writefile.flush();
+            writefile.close();
+            fos.close();
+        }
+
     }
 }
 

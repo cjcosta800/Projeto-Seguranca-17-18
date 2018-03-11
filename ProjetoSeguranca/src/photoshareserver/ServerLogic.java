@@ -133,9 +133,7 @@ public class ServerLogic {
 		 * Line 4: Comment ...
 		 */
 
-		String photoNameSplit[] = photoName.split("\\.");
-
-		String photometapath = userPath + "/" + photoNameSplit[0] + ".txt";
+		String photometapath = userPath + "/" + photoName + ".txt";
 
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
@@ -237,6 +235,17 @@ public class ServerLogic {
 
 			if (isFollower == 0) {
 
+				String userIdPath = serverPath + userId;
+				ArrayList<String> photoNames = getPhotosList(userIdPath);
+
+				outputStream.writeObject(new Integer(photoNames.size()));
+				if(photoNames.size() != 0) {
+					for (String photo : photoNames) {
+						sendPhoto(photo, userIdPath);
+						sendComments(photo, userIdPath);
+					}
+				}
+
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -246,8 +255,7 @@ public class ServerLogic {
 
 	/**
 	 * Loads users and passwords from the passwords file (provided by passwordsPath)
-	 *
-	 * @return HashMap<User ,   P assword> containing all users and corresponding password
+	 * @return HashMap<User, Password> containing all users and corresponding password
 	 *
 	 @throws IOException
 	 */
@@ -310,8 +318,7 @@ public class ServerLogic {
 	 */
 	private String getPhotoMetaPath(String userid, String photoName) {
 
-		String photoNameNoExtension = photoName.split("\\.")[0];
-		String photoMetaPath = serverPath + userid + "/" + photoNameNoExtension + ".txt";
+		String photoMetaPath = serverPath + userid + "/" + photoName + ".txt";
 
 		File photo = new File(photoMetaPath);
 
@@ -404,13 +411,97 @@ public class ServerLogic {
 			if (file.isFile()) {
 
 				String photoName = file.getName();
+				String[] split = photoName.split("\\.");
 
-				if (!photoName.split("\\.")[1].equals("txt")) {
-					result.add(photoName);
+				if (!split[1].equals("txt")) {
+					if(split.length == 2)
+						result.add(photoName);
 				}
 			}
 		}
 
 		return result;
 	}
+
+	private void sendFile(File file) throws IOException, ClassNotFoundException {
+		FileInputStream fileOut = new FileInputStream(file);
+		BufferedInputStream readFileBytes = new BufferedInputStream(fileOut);
+
+		outputStream.writeObject(new String(file.getName()));
+
+		Boolean canProceed = (Boolean) inputStream.readObject();
+
+		if(canProceed) {
+			outputStream.writeObject(new Integer((int)file.length()));
+
+			byte buffer[] = new byte[(int) file.length()];
+
+			readFileBytes.read(buffer, 0, buffer.length);
+
+			outputStream.write(buffer,0, buffer.length);
+			outputStream.flush();
+		}
+
+		readFileBytes.close();
+		fileOut.close();
+	}
+
+	private void sendPhoto(String photoName, String userIdPath) {
+		try {
+			File photo = new File(userIdPath + "/" + photoName);
+			sendFile(photo);
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void sendComments(String photo, String userIdPath) {
+
+		String photoMetaFile = userIdPath + "/" + photo + ".txt";
+		//photo-comments.txt
+		String photoCommentsTmp = userIdPath + "/" + photo + "-comments.txt";
+
+		try {
+			BufferedReader freader = new BufferedReader(new FileReader(photoMetaFile));
+			BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoCommentsTmp));
+
+			// first line is "trash"
+			freader.readLine();
+			String line = freader.readLine();
+
+			int likes = Integer.parseInt(line.split(":")[0]);
+			int dislikes = Integer.parseInt(line.split(":")[1]);
+
+			fwriter.write("Likes: " + likes + "\nDislikes: " + dislikes);
+
+			// read comments
+			line = freader.readLine();
+			while(line != null) {
+				fwriter.write(line + "\n");
+				line = freader.readLine();
+			}
+			fwriter.flush();
+			fwriter.close();
+			freader.close();
+
+			// sends photo comments and then deletes it
+			File photoComments = new File(photoCommentsTmp);
+			sendFile(photoComments);
+			photoComments.delete();
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 }

@@ -64,8 +64,8 @@ public class PhotoShare {
 						clientLogic.likeDislikeCounter (userid, photoName);
 					}
 					else if(command.equals("-g")) {
-						String userid = args[4];
-						clientLogic.backupAllPhotos(userid);
+						String userId = args[4];
+						clientLogic.getPhotos(userId);
 					}
 
 					else if(command.equals("-c")) {
