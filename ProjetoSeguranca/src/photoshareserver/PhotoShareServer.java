@@ -83,6 +83,8 @@ public class PhotoShareServer {
 					// informs client that login failed
 					outStream.writeObject(new Boolean(false));
 
+					System.out.println("Connection with client refused, wrong password");
+
 					outStream.close();
 					inStream.close();
 					socket.close();
@@ -91,7 +93,7 @@ public class PhotoShareServer {
 
 				// informs client that login was successful!
 				outStream.writeObject(new Boolean(true));
-
+				System.out.println("User " + user + " is now logged in.");
 
 				String command = (String) inStream.readObject();
 				// adiciona/copia fotos para o servidor
@@ -122,6 +124,9 @@ public class PhotoShareServer {
 					// copia do servidor para o cliente fotos de userid
 				} else if (command.equals("-g")) {
 					String userId = (String) inStream.readObject();
+
+					System.out.println(user + " is asking for " + userId + "photos.");
+
 					serverLogic.downloadPhotos(userId);
 
 					// adiciona um comentario a fotografia
@@ -129,6 +134,8 @@ public class PhotoShareServer {
 					String comment = (String) inStream.readObject();
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
+
+					System.out.println(user + " is commenting on photo " + photo + " of user " + userId + ".");
 
 					serverLogic.commentPhoto(comment, userId, photo);
 

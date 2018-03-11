@@ -156,7 +156,10 @@ public class ServerLogic {
 
 	}
 
-
+	/**
+	 * Sends a list of photo and creation date to user
+	 * @param userId
+	 */
 	public void listPhotos(String userId) {
 
 		try {
@@ -181,6 +184,7 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Adds a new comment to photoName if current user is a follower of userId
 	 * @param comment
 	 * @param userId
 	 * @param photoName
@@ -225,6 +229,7 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Sends userId photos to user if user is an userId follower
 	 * @param userId
 	 */
 	public void downloadPhotos(String userId) {
@@ -241,11 +246,14 @@ public class ServerLogic {
 				outputStream.writeObject(new Integer(photoNames.size()));
 				if(photoNames.size() != 0) {
 					for (String photo : photoNames) {
+						System.out.println("Sending photo " + photo + " and comments...");
+
 						sendPhoto(photo, userIdPath);
 						sendComments(photo, userIdPath);
 					}
 				}
 
+				System.out.println("Success, all photos sent.");
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -267,7 +275,7 @@ public class ServerLogic {
 
 		// HashMap <User, Password>
 		HashMap<String, String> userpwd = new HashMap<>();
-		String tokenised[] = null;
+		String tokenised[];
 		// user;password
 		while (line != null) {
 
@@ -312,9 +320,10 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Each photo has a "meta file" that contains the date it was uploaded, likes, dislikes and comments (if it has any)
 	 * @param userid
 	 * @param photoName
-	 * @return
+	 * @return photo meta file path if photo exists, null if it doesn't
 	 */
 	private String getPhotoMetaPath(String userid, String photoName) {
 
@@ -326,8 +335,9 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Each user has a folder with his photos. This method returns all photos listed on an ArrayList
 	 * @param userIdPath
-	 * @return
+	 * @return photo names
 	 */
 	private String getPhotoList(String userIdPath) {
 
@@ -335,15 +345,8 @@ public class ServerLogic {
 
 		ArrayList<String> photoNames = getPhotosList(userIdPath);
 
-		int counter = 0;
-
 		for (String photo : photoNames) {
-
-			if (counter % 4 == 0) {
-				sb.append(photo + "\n");
-			} else {
-				sb.append(photo + " ");
-			}
+			sb.append(photo + " was uploaded at " + uploadDate(photo + ".txt", userIdPath) +"\n");
 
 		}
 
@@ -351,8 +354,34 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Returns the upload date of a photo
+	 * @param photometafile
+	 * @param userIdPath
+	 * @return upload date of a photo
+	 */
+	private String uploadDate(String photometafile, String userIdPath) {
+		try {
+			BufferedReader freader = new BufferedReader(new FileReader(userIdPath + "/" + photometafile));
+
+			String result = freader.readLine();
+			freader.close();
+
+			return result;
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Checks if user is a follower of userId. Being a follower means local user can see, comment, like and dislike userId's
+	 * photos
 	 * @param userId
-	 * @return
+	 * @return 0 if user is a follower, 1 if user is not a follower, 2 if userId doesn't exist
 	 */
 	private int isFollower(String userId) {
 
@@ -423,6 +452,12 @@ public class ServerLogic {
 		return result;
 	}
 
+	/**
+	 * Sends a file to client
+	 * @param file file to be sent to client
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	private void sendFile(File file) throws IOException, ClassNotFoundException {
 		FileInputStream fileOut = new FileInputStream(file);
 		BufferedInputStream readFileBytes = new BufferedInputStream(fileOut);
@@ -446,6 +481,11 @@ public class ServerLogic {
 		fileOut.close();
 	}
 
+	/**
+	 * Sends a photo to client
+	 * @param photoName
+	 * @param userIdPath
+	 */
 	private void sendPhoto(String photoName, String userIdPath) {
 		try {
 			File photo = new File(userIdPath + "/" + photoName);
@@ -460,6 +500,11 @@ public class ServerLogic {
 		}
 	}
 
+	/**
+	 * Sends photo comments (and likes/dislikes) to client
+	 * @param photo
+	 * @param userIdPath
+	 */
 	private void sendComments(String photo, String userIdPath) {
 
 		String photoMetaFile = userIdPath + "/" + photo + ".txt";

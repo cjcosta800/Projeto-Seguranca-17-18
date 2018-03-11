@@ -110,7 +110,7 @@ public class ClientLogic {
 
     public void listPhotos (String user) throws IOException, ClassNotFoundException {
 
-        System.out.println("Getting photo list of user " + user);
+        System.out.println("Getting photo list of user " + user + ":");
 
 		outputStream.writeObject(new String(user));
 
@@ -122,7 +122,7 @@ public class ClientLogic {
 		if (isFollower == 0) {
 			String photoList = (String) inputStream.readObject();
 
-			System.out.println(photoList);
+			System.out.print(photoList);
 
 		} else if(isFollower == 1){
 			System.err.println("You don't have permissions to check " + user + " photos list.");
@@ -164,8 +164,12 @@ public class ClientLogic {
 
             }
 
-            System.out.println("Received " + numPhotos + " photos from server.\nPhotos are located at " +
-                    receiveP.getAbsolutePath());
+            if (numPhotos != 0) {
+                System.out.println("Received " + numPhotos + " photos from server.\nPhotos are located at " +
+                        receiveP.getAbsolutePath());
+            } else {
+                System.out.println("Received no photos from server.\nUser has no photos!");
+            }
 
         } else if(isFollower == 1){
             System.err.println("You don't have permissions to get " + userId + " photos.");

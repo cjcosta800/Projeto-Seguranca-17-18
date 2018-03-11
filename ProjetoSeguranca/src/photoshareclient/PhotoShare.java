@@ -97,10 +97,15 @@ public class PhotoShare {
 					else
 						System.err.println("Command Unknown");
 				}
+
+				outStream.writeObject(new String("finished"));
+
 			}
 
 			else {
 				outStream.writeObject(new String("finished"));
+
+				System.err.println("Login not successful, wrong password!");
 			}
 
 			outStream.close();
