@@ -75,13 +75,13 @@ public class PhotoShare {
 					else if(command.equals("-L")) {
 						String userid = args[4];
 						String photoName = args[5];
-//						clientLogic.likePhoto(userid, photoName);
+						clientLogic.likeDislike(userid, photoName,0);
 					}
 
 					else if(command.equals("-D")) {
 						String userid = args[4];
 						String photoName = args[5];
-//						clientLogic.dislikePhoto(userid, photoName);
+						clientLogic.likeDislike(userid, photoName,1);
 					}
 
 					else if(command.equals("-f")) {

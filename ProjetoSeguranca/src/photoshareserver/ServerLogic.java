@@ -293,6 +293,57 @@ public class ServerLogic {
 
 	}
 
+	public void incrementStats(String userId, String photoName, int posCounter) throws FileNotFoundException, IOException {
+
+        String photometapath = getPhotoMetaPath(userId, photoName);
+        int isFollower = isFollower(userId);
+
+        try {
+
+            if (isFollower == 0) {
+
+                if (photometapath != null) {
+
+                    File metaData = new File(photometapath);
+                    File aux = new File(userPath + ".tmp");
+                    BufferedReader buffReader = new BufferedReader(new FileReader(metaData));
+                    PrintWriter pw = new PrintWriter(new FileWriter(aux));
+                    String temp;
+
+                    String photoDetails = buffReader.readLine();
+                    pw.append(photoDetails);
+
+                    String likesDislikes = buffReader.readLine();
+                    String[] counters = likesDislikes.split(":");
+                    int data = Integer.parseInt(counters[posCounter]) + 1;
+                    counters[posCounter] = Integer.toString(data);
+                    pw.append(counters[0] + ":" + counters[1]);
+
+                    String line;
+                    while ((line = buffReader.readLine()) != null) {
+                        pw.append(line);
+                    }
+
+                    pw.close();
+                    buffReader.close();
+                    metaData.delete();
+                    aux.renameTo(metaData);
+
+                    outputStream.writeObject(new Integer(0)); //SUCESSO
+                } else
+                    outputStream.writeObject(new Integer(3)); //FICHEIRO NÃO EXISTE
+            } else
+                outputStream.writeObject(new Integer(isFollower));
+
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
+
 	/**
 	 * Loads users and passwords from the passwords file (provided by passwordsPath)
 	 * @return HashMap<User, Password> containing all users and corresponding password

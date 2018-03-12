@@ -145,13 +145,16 @@ public class PhotoShareServer {
 				} else if (command.equals("-L")) {
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
+					serverLogic.incrementStats(userId,photo,0);
 
 					// adiciona um Dislike à fotografia
 				} else if (command.equals("-D")) {
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
+                    serverLogic.incrementStats(userId,photo,1);
 
-					// adiciona utilizadores como seguidores do user
+
+                    // adiciona utilizadores como seguidores do user
 				} else if (command.equals("-f")) {
 					String followUserIds = (String) inStream.readObject();
 

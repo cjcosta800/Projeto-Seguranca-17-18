@@ -254,6 +254,40 @@ public class ClientLogic {
 
     }
 
+    public void likeDislike (String userId, String photoName, int decider) throws IOException, ClassNotFoundException {
+
+        if (decider == 0)  //DAR LIKE
+            System.out.println("Liking " + userId + "'s " + photoName + "!");
+
+        else
+            System.out.println("Disliking " + userId + "'s " + photoName + "!");
+
+
+        outputStream.writeObject(new String(userId));
+        outputStream.writeObject(new String(photoName));
+
+        int success = (Integer) inputStream.readObject();
+
+        switch (success) {
+            case 1:
+                System.err.println("You don't have permissions to like " + userId + "'s photos.");
+                break;
+
+            case 2:
+                System.err.println("User " + userId + " doesn't exist.");
+                break;
+
+            case 3:
+                System.err.println("Photo " + photoName + " doesn't exist.");
+                break;
+
+            default:
+                System.out.println("You liked" + userId + "'s " + photoName + ".");
+                break;
+        }
+    }
+
+
     /**
      * Converts comments from args to String
      * @param args
