@@ -12,11 +12,16 @@ public class PhotoShareServer {
 		/* Check number of args. Must be 1 */
 		if (args.length != 1) {
 			System.err.println("Server must be run with the following command: 'PhotoShareServer <port>'");
-			System.err.println("For example: 'PhotoShareServer 23456'");
+			System.err.println("For example: 'PhotoShareServer 23232'");
 			System.exit(0);
 		}
 
 		int socket = Integer.parseInt(args[0]);
+
+		if (socket != 23232) {
+			System.err.println("PhotoShareServer listens at socket 23232");
+			System.exit(0);
+		}
 
 		System.out.println("Listening for new connections at " + args[0] + "...");
 		PhotoShareServer photoShareServer = new PhotoShareServer();

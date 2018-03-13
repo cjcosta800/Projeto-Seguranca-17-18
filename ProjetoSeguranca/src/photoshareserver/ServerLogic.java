@@ -19,9 +19,25 @@ public class ServerLogic {
 	public ServerLogic(String passwordsPath, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
 		this.passwordsPath = passwordsPath;
+		verifyPasswordsFile();
 		this.outputStream = outputStream;
 		this.inputStream = inputStream;
 
+	}
+
+	/**
+	 * Checks if passwordsPath points to an existing file. If it doesn't, creates a new passwords file
+	 * @param passwordsPath
+	 */
+	private void verifyPasswordsFile() {
+		File passwords = new File(passwordsPath);
+		if(!passwords.isFile()) {
+			try {
+				passwords.createNewFile();
+			} catch (IOException e) {
+				System.err.println("Failed to create passwords file");
+			}
+		}
 	}
 
 	/**
