@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -109,11 +110,14 @@ public class PhotoShare {
 			outStream.close();
 			inStream.close();
 			socket.close();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
+		} catch (ConnectException e) {
+		    System.err.println("Couldn't connect with server (Connection refused). Maybe it is offline?");
+		    System.exit(0);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
 		} catch (FileNotFoundException e) {
 			System.err.println("File not found!");
-			System.exit(1);
+			System.exit(0);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -122,18 +126,15 @@ public class PhotoShare {
 	}
 
 
-	public static Socket startClient(String ip, int port) {
+	public static Socket startClient(String ip, int port) throws IOException {
 
 		Socket socket = null;
-		try {
-			socket = new Socket(ip, port);
 
-			if(socket.isConnected())
-				System.out.println("Connected.");
+		socket = new Socket(ip, port);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		if(socket.isConnected())
+		    System.out.println("Connected.");
+
 		return socket;
 	}
 
