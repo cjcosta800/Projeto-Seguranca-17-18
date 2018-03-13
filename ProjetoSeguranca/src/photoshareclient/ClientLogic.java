@@ -257,10 +257,10 @@ public class ClientLogic {
     public void likeDislike (String userId, String photoName, int decider) throws IOException, ClassNotFoundException {
 
         if (decider == 0)  //DAR LIKE
-            System.out.println("Liking " + userId + "'s " + photoName + "!");
+            System.out.println("Liking " + userId + "'s " + photoName + "...");
 
         else
-            System.out.println("Disliking " + userId + "'s " + photoName + "!");
+            System.out.println("Disliking " + userId + "'s " + photoName + "...");
 
 
         outputStream.writeObject(new String(userId));
@@ -282,7 +282,11 @@ public class ClientLogic {
                 break;
 
             default:
-                System.out.println("You liked" + userId + "'s " + photoName + ".");
+                if (decider == 0)
+                    System.out.println("You liked " + userId + "'s " + photoName + ".");
+                else
+                    System.out.println("You disliked " + userId + "'s " + photoName + ".");
+
                 break;
         }
     }

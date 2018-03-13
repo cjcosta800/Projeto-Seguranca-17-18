@@ -293,7 +293,7 @@ public class ServerLogic {
 
 	}
 
-	public void incrementStats(String userId, String photoName, int posCounter) throws FileNotFoundException, IOException {
+	public void incrementStats(String userId, String photoName, int posCounter) {
 
         String photometapath = getPhotoMetaPath(userId, photoName);
         int isFollower = isFollower(userId);
@@ -307,24 +307,24 @@ public class ServerLogic {
                     File metaData = new File(photometapath);
                     File aux = new File(userPath + ".tmp");
                     BufferedReader buffReader = new BufferedReader(new FileReader(metaData));
-                    PrintWriter pw = new PrintWriter(new FileWriter(aux));
-                    String temp;
+                    BufferedWriter fwriter = new BufferedWriter(new FileWriter(aux));
 
                     String photoDetails = buffReader.readLine();
-                    pw.append(photoDetails);
+                    fwriter.write(photoDetails + "\n");
 
                     String likesDislikes = buffReader.readLine();
                     String[] counters = likesDislikes.split(":");
                     int data = Integer.parseInt(counters[posCounter]) + 1;
                     counters[posCounter] = Integer.toString(data);
-                    pw.append(counters[0] + ":" + counters[1]);
+                    fwriter.write(counters[0] + ":" + counters[1] + "\n");
 
-                    String line;
-                    while ((line = buffReader.readLine()) != null) {
-                        pw.append(line);
+                    String line = buffReader.readLine();
+                    while (line  != null) {
+                        fwriter.write(line + "\n");
+                        line = buffReader.readLine();
                     }
 
-                    pw.close();
+                    fwriter.close();
                     buffReader.close();
                     metaData.delete();
                     aux.renameTo(metaData);
