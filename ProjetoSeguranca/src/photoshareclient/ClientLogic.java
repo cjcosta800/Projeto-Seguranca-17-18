@@ -25,15 +25,7 @@ public class ClientLogic {
      */
 	public void addPhotos(String args[]) throws IOException, ClassNotFoundException {
 
-	    int counter = 4;
-        ArrayList<String> photonames = new ArrayList<>();
-
-        while (counter < args.length) {
-            photonames.add(args[counter]);
-
-            counter++;
-        }
-
+        ArrayList<String> photonames = getArgs(args);
 		System.out.println("Sending " + photonames.size() + " photos.");
         sendPhotos(photonames);
         System.out.println("Task completed.");
@@ -359,6 +351,88 @@ public class ClientLogic {
         }
 
     }
+
+    public void followUnfollowUsers(String[] args, int option) {
+
+        ArrayList<String> users = getArgs(args);
+
+        System.out.println("Trying to follow " + users.size() + " users...");
+
+        followUnfollowUsers(users, option);
+
+        System.out.println("Task completed.");
+
+    }
+
+    private ArrayList<String> getArgs(String[] args) {
+        int counter = 4;
+        ArrayList<String> result = new ArrayList<>();
+
+        while (counter < args.length) {
+            result.add(args[counter]);
+
+            counter++;
+        }
+
+        return result;
+    }
+
+    private void followUnfollowUsers(ArrayList<String> users, int option) {
+
+        try {
+            // send number of users to follow or unfollow
+            outputStream.writeObject(new Integer(users.size()));
+
+            int counter = 0;
+
+            while(counter < users.size()) {
+
+                outputStream.writeObject(users.get(counter));
+
+                int answer = (Integer) inputStream.readObject();
+
+                switch (answer) {
+                    case 1:
+                        if (option == 0)
+                            System.err.println("User " + users.get(counter) + " is not a valid user.");
+                        else
+                            System.err.println(""); //TODO
+                        break;
+
+                    case 2:
+                        if (option == 0)
+                            System.err.println("User " + users.get(counter) + " is already a follower.");
+                        else
+                            System.err.println(""); //TODO
+                        break;
+
+                    case 3:
+                        if (option == 0)
+                            System.err.println("You can't follow yourself.");
+                        else
+                            System.err.println("You can't unfollow yourself.");
+                        break;
+
+                    default:
+                        if (option == 0)
+                            System.out.println("User " + users.get(counter) + " is now a follower.");
+                        else
+                            System.out.println("User " + users.get(counter) + " is no longer a follower.");
+                        break;
+                }
+
+                counter++;
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
 
 

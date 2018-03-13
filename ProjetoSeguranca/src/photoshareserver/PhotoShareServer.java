@@ -156,8 +156,12 @@ public class PhotoShareServer {
 
                     // adiciona utilizadores como seguidores do user
 				} else if (command.equals("-f")) {
-					String followUserIds = (String) inStream.readObject();
-					serverLogic.followUser(followUserIds);
+
+					int numUsers = (Integer) inStream.readObject();
+
+					System.out.println("User is trying to follow " + numUsers + " users.");
+
+					serverLogic.followUsers(numUsers);
 
 					// remove utilizadores de seguidores do user
 				} else if (command.equals("-r")) {

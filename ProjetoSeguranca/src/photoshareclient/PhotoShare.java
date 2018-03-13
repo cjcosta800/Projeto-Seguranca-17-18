@@ -85,13 +85,11 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-f")) {
-						String users = clientLogic.argsToString();
-//						clientLogic.followLocalUser(users);
+						clientLogic.followUnfollowUsers(args, 0);
 					}
 
 					else if(command.equals("-r")) {
-						String users = clientLogic.argsToString();
-//						clientLogic.unfollowLocalUser(users);
+						clientLogic.followUnfollowUsers(args, 1);
 					}
 
 					else

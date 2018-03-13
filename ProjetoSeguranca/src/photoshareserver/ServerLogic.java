@@ -57,6 +57,17 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Checks if a user exists
+	 * @param userToFollow
+	 * @return true if user exists
+	 */
+	private boolean isUser(String userToFollow) {
+
+		return userPwd.containsKey(userToFollow);
+
+	}
+
+	/**
 	 * Receives one file from the client
 	 *
 	 * @throws IOException
@@ -342,30 +353,38 @@ public class ServerLogic {
         }
     }
 
-    public void followUser (String users) throws FileNotFoundException, IOException {
-		String[] usersList = users.split(" ");
+	/**
+	 * Follows a user
+	 * @param userToFollow
+	 */
+	private void followUser(String userToFollow) {
+
 		String followersPath = getFollowersPath(user);
 
 		try {
-			File followers = new File(followersPath);
-			File aux = makeTempFile(followersPath);
-			BufferedReader buffReader = new BufferedReader(new FileReader((aux)));
-			PrintWriter pw = new PrintWriter(new FileWriter(aux,true));
-			String user;
 
-			while((user = buffReader.readLine()) != null) {
-				for (int i = 0; i < usersList.length; i++) {
-					if (!usersList[i].equals(user.trim())) {
-						pw.println(user);
-						pw.flush();
-					}
-				}
+			if (userToFollow.equals(user)) {
+				outputStream.writeObject(3); // o user nao se pode seguir
+				return;
 			}
 
-			pw.close();
-			buffReader.close();
-			followers.delete();
-			aux.renameTo(followers);
+			File followers = new File(followersPath);
+			BufferedWriter fwriter = new BufferedWriter(new FileWriter(followers,true));
+			String line;
+
+			if (isUser(userToFollow)) {
+				if(!userIsFollowed(userToFollow, followers)) {
+					fwriter.write(userToFollow + "\n");
+					outputStream.writeObject(new Integer(0));
+				} else {
+					outputStream.writeObject(new Integer(2)); // user ja e seguido
+				}
+			} else {
+				outputStream.writeObject(new Integer(1)); // user nao existe
+			}
+
+			fwriter.flush();
+			fwriter.close();
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
@@ -374,7 +393,33 @@ public class ServerLogic {
 		}
 	}
 
-	public void unfollowUser (String users) throws FileNotFoundException, IOException {
+	/**
+	 * Check if local user follows userToFollow
+	 * @param userToFollow
+	 * @param followers
+	 * @return true if userToFollow is already followed
+	 * @throws IOException
+	 */
+	private boolean userIsFollowed(String userToFollow, File followers) throws IOException {
+
+		BufferedReader freader = new BufferedReader(new FileReader(followers));
+		String line = freader.readLine();
+
+		boolean userFound = false;
+
+		while (line != null && !userFound) {
+			if (userToFollow.equals(line)) {
+				userFound = true;
+			}
+
+			line = freader.readLine();
+		}
+
+		return userFound;
+
+	}
+
+	public void unfollowUser (String users) {
 		String[] usersList = users.split(" ");
 		String followersPath = getFollowersPath(user);
 
@@ -484,12 +529,12 @@ public class ServerLogic {
 
 	/**
 	 * Each user has a followers file, that contains all its followers (if it has any)
-	 * @param userid
+	 * @param userId
 	 * @return followers path if it exists, null if it doesn't
 	 */
-	private String getFollowersPath(String userid) {
+	private String getFollowersPath(String userId) {
 
-		String followersPath = serverPath + userid + "/" + "followers.txt";
+		String followersPath = serverPath + userId + "/" + "followers.txt";
 
 		File followers = new File(followersPath);
 
@@ -732,6 +777,12 @@ public class ServerLogic {
 		return sb.toString();
 	}
 
+	/**
+	 * Creates a copy of filepath that acts as a temporary file
+	 * @param filepath
+	 * @return temporary file
+	 * @throws IOException
+	 */
 	private File makeTempFile(String filepath) throws IOException {
 		BufferedReader buffReader = new BufferedReader(new FileReader(filepath));
 		File copia = new File(filepath + ".tmp");
@@ -753,4 +804,23 @@ public class ServerLogic {
 	}
 
 
+	/**
+	 * Follows numUsers users
+	 * @param numUsers
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public void followUsers(int numUsers) throws IOException, ClassNotFoundException {
+
+		int counter = 0;
+
+		while( counter < numUsers ) {
+			String userToFollow = (String) inputStream.readObject();
+
+			followUser(userToFollow);
+
+			counter++;
+		}
+
+	}
 }
