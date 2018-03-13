@@ -342,6 +342,71 @@ public class ServerLogic {
         }
     }
 
+    public void followUser (String users) throws FileNotFoundException, IOException {
+		String[] usersList = users.split(" ");
+		String followersPath = getFollowersPath(user);
+
+		try {
+			File followers = new File(followersPath);
+			File aux = makeTempFile(followersPath);
+			BufferedReader buffReader = new BufferedReader(new FileReader((aux)));
+			PrintWriter pw = new PrintWriter(new FileWriter(aux,true));
+			String user;
+
+			while((user = buffReader.readLine()) != null) {
+				for (int i = 0; i < usersList.length; i++) {
+					if (!usersList[i].equals(user.trim())) {
+						pw.println(user);
+						pw.flush();
+					}
+				}
+			}
+
+			pw.close();
+			buffReader.close();
+			followers.delete();
+			aux.renameTo(followers);
+
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+
+	public void unfollowUser (String users) throws FileNotFoundException, IOException {
+		String[] usersList = users.split(" ");
+		String followersPath = getFollowersPath(user);
+
+		try {
+
+			File followers = new File(followersPath);
+			File aux = makeTempFile(followersPath);
+			BufferedReader buffReader = new BufferedReader(new FileReader((followers)));
+			PrintWriter pw = new PrintWriter(new FileWriter(aux));
+			String user;
+
+			while((user = buffReader.readLine()) != null) {
+				for (int i = 0; i < usersList.length; i++) {
+					if (!user.trim().equals(usersList[i])) {
+						pw.println(user);
+						pw.flush();
+					}
+				}
+			}
+
+			pw.close();
+			buffReader.close();
+			followers.delete();
+			aux.renameTo(followers);
+
+		} catch (FileNotFoundException ex) {
+			ex.printStackTrace();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+
 
 
 	/**
@@ -416,6 +481,21 @@ public class ServerLogic {
 
 		return photo.isFile() ? photoMetaPath : null;
 	}
+
+	/**
+	 * Each user has a followers file, that contains all its followers (if it has any)
+	 * @param userid
+	 * @return followers path if it exists, null if it doesn't
+	 */
+	private String getFollowersPath(String userid) {
+
+		String followersPath = serverPath + userid + "/" + "followers.txt";
+
+		File followers = new File(followersPath);
+
+		return followers.isFile() ? followersPath : null;
+	}
+
 
 	/**
 	 * Each user has a folder with his photos. This method returns all photos listed on an ArrayList
@@ -651,4 +731,26 @@ public class ServerLogic {
 
 		return sb.toString();
 	}
+
+	private File makeTempFile(String filepath) throws IOException {
+		BufferedReader buffReader = new BufferedReader(new FileReader(filepath));
+		File copia = new File(filepath + ".tmp");
+		// if File doesnt exists, then create it
+		if (!copia.exists()) {
+			copia.createNewFile();
+		}
+		FileWriter filewriter = new FileWriter(copia.getAbsoluteFile());
+		BufferedWriter buffWriter = new BufferedWriter(filewriter);
+		String line;
+		while ((line = buffReader.readLine()) != null) {
+			buffWriter.write(line);
+		}
+		buffWriter.flush();
+		buffWriter.close();
+		buffReader.close();
+
+		return copia;
+	}
+
+
 }

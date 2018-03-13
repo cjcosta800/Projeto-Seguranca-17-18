@@ -287,6 +287,19 @@ public class ClientLogic {
         }
     }
 
+    public static String argsToString (String[] args) {
+        StringBuilder sb = new StringBuilder();
+        int argsLength = args.length;
+
+        for (int i = 4; i < argsLength; i++) { // user pass server op user1 user2 user3 ....
+            sb.append(args[i] + " ");
+        }
+
+        sb.deleteCharAt(sb.length()-1);
+
+        return sb.toString();
+    }
+
 
     /**
      * Converts comments from args to String

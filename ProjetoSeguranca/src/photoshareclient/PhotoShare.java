@@ -85,13 +85,13 @@ public class PhotoShare {
 					}
 
 					else if(command.equals("-f")) {
-						String users = args[4];
-//						clientLogic.followLocalUser(users); //Utilizadores s�o separados por virgulas.
+						String users = clientLogic.argsToString();
+//						clientLogic.followLocalUser(users);
 					}
 
 					else if(command.equals("-r")) {
-						String users = args[4];
-//						clientLogic.unfollowLocalUser(users); //Utilizadores s�o separados por virgulas.
+						String users = clientLogic.argsToString();
+//						clientLogic.unfollowLocalUser(users);
 					}
 
 					else
@@ -138,5 +138,6 @@ public class PhotoShare {
 		}
 		return socket;
 	}
+
 
 }
