@@ -1,5 +1,3 @@
- package photoshareserver;
-
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -7,7 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class ServerLogic {
-	private final String serverPath = "./src/photoshareserver/Photos/";
+	private final String serverPath = "./PhotoShareServer/PhotoShare/";
 
 	private String passwordsPath;
 	private HashMap<String, String> userPwd;
