@@ -161,13 +161,16 @@ public class PhotoShareServer {
 
 					System.out.println("User is trying to follow " + numUsers + " users.");
 
-					serverLogic.followUsers(numUsers);
+					serverLogic.followUnfollowUsers(numUsers, 0);
 
 					// remove utilizadores de seguidores do user
 				} else if (command.equals("-r")) {
-					String followUserIds = (String) inStream.readObject();
-					serverLogic.unfollowUser(followUserIds);
 
+                    int numUsers = (Integer) inStream.readObject();
+
+                    System.out.println("User is trying to follow " + numUsers + " users.");
+
+                    serverLogic.followUnfollowUsers(numUsers, 1);
 
 				}
 

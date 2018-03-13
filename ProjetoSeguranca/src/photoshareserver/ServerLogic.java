@@ -419,31 +419,48 @@ public class ServerLogic {
 
 	}
 
-	public void unfollowUser (String users) {
-		String[] usersList = users.split(" ");
-		String followersPath = getFollowersPath(user);
+	/**
+	 *
+	 * @param userToUnfollow
+	 */
+	private void unfollowUser (String userToUnfollow) {
+
+		String followersPath = getFollowersPath(this.user);
 
 		try {
-
 			File followers = new File(followersPath);
-			File aux = makeTempFile(followersPath);
-			BufferedReader buffReader = new BufferedReader(new FileReader((followers)));
-			PrintWriter pw = new PrintWriter(new FileWriter(aux));
-			String user;
 
-			while((user = buffReader.readLine()) != null) {
-				for (int i = 0; i < usersList.length; i++) {
-					if (!user.trim().equals(usersList[i])) {
-						pw.println(user);
-						pw.flush();
-					}
-				}
+			if (userToUnfollow.equals(this.user)) {
+				outputStream.writeObject(3); // nao se pode fazer unfollow a si mesmo
 			}
 
-			pw.close();
-			buffReader.close();
-			followers.delete();
-			aux.renameTo(followers);
+			if(userIsFollowed(userToUnfollow, followers)) {
+				File tmp = new File(followersPath + ".tmp");
+				BufferedReader readFollowers = new BufferedReader(new FileReader(followers));
+				BufferedWriter writeTmp = new BufferedWriter(new FileWriter(tmp));
+
+				String line = readFollowers.readLine();
+
+				while (line != null) {
+
+					System.out.println(line);
+
+					if(!line.equals(userToUnfollow))
+						writeTmp.write(line + "\n");
+
+					line = readFollowers.readLine();
+				}
+
+				readFollowers.close();
+				writeTmp.close();
+				followers.delete();
+				tmp.renameTo(followers);
+
+				outputStream.writeObject(new Integer(0)); // correu tudo bem
+
+			} else {
+				outputStream.writeObject(new Integer(1)); // user nao era follower
+			}
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
@@ -451,8 +468,6 @@ public class ServerLogic {
 			ex.printStackTrace();
 		}
 	}
-
-
 
 	/**
 	 * Loads users and passwords from the passwords file (provided by passwordsPath)
@@ -805,19 +820,23 @@ public class ServerLogic {
 
 
 	/**
-	 * Follows numUsers users
+	 * Follows or Unfollows numUsers users
 	 * @param numUsers
+	 * @param option 0 if follow new users 1 if unfollow users
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public void followUsers(int numUsers) throws IOException, ClassNotFoundException {
+	public void followUnfollowUsers(int numUsers, int option) throws IOException, ClassNotFoundException {
 
 		int counter = 0;
 
 		while( counter < numUsers ) {
-			String userToFollow = (String) inputStream.readObject();
+			String userToFollowUnfollow = (String) inputStream.readObject();
 
-			followUser(userToFollow);
+			if (option == 0)
+				followUser(userToFollowUnfollow);
+			if (option == 1)
+				unfollowUser(userToFollowUnfollow);
 
 			counter++;
 		}

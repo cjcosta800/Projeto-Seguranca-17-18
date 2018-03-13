@@ -396,14 +396,11 @@ public class ClientLogic {
                         if (option == 0)
                             System.err.println("User " + users.get(counter) + " is not a valid user.");
                         else
-                            System.err.println(""); //TODO
+                            System.err.println("User " + users.get(counter) + " isn't a follower"); //TODO
                         break;
 
                     case 2:
-                        if (option == 0)
-                            System.err.println("User " + users.get(counter) + " is already a follower.");
-                        else
-                            System.err.println(""); //TODO
+                        System.err.println("User " + users.get(counter) + " is already a follower.");
                         break;
 
                     case 3:
