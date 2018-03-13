@@ -114,7 +114,12 @@ public class ClientLogic {
 		if (isFollower == 0) {
 			String photoList = (String) inputStream.readObject();
 
-			System.out.print(photoList);
+            if (photoList.length() == 0) {
+                System.err.println("User " + user + " has no photos.");
+            } else {
+                System.out.print(photoList);
+            }
+
 
 		} else if(isFollower == 1){
 			System.err.println("You don't have permissions to check " + user + " photos list.");

@@ -1,10 +1,7 @@
  package photoshareserver;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -145,13 +142,13 @@ public class PhotoShareServer {
 				} else if (command.equals("-L")) {
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
-					serverLogic.incrementStats(userId,photo,0);
+					serverLogic.incrementLikeDislike(userId,photo,0);
 
 					// adiciona um Dislike à fotografia
 				} else if (command.equals("-D")) {
 					String userId = (String) inStream.readObject();
 					String photo = (String) inStream.readObject();
-                    serverLogic.incrementStats(userId,photo,1);
+                    serverLogic.incrementLikeDislike(userId,photo,1);
 
 
                     // adiciona utilizadores como seguidores do user

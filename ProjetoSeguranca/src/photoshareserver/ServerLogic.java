@@ -7,8 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class ServerLogic {
-
 	private final String serverPath = "./src/photoshareserver/Photos/";
+
 	private String passwordsPath;
 	private HashMap<String, String> userPwd;
 	private String user;
@@ -65,6 +65,37 @@ public class ServerLogic {
 
 		return userPwd.containsKey(userToFollow);
 
+	}
+
+	/**
+	 * Loads users and passwords from the passwords file (provided by passwordsPath)
+	 * @return HashMap<User, Password> containing all users and corresponding password
+	 *
+	 @throws IOException
+	 */
+	private HashMap<String, String> loadPasswords() throws IOException {
+
+		BufferedReader filereader = new BufferedReader(new FileReader(this.passwordsPath));
+
+		String line = filereader.readLine();
+
+		// HashMap <User, Password>
+		HashMap<String, String> userpwd = new HashMap<>();
+		String tokenised[];
+		// user;password
+		while (line != null) {
+
+			tokenised = line.split(":");
+
+			userpwd.put(tokenised[0], tokenised[1]);
+
+			line = filereader.readLine();
+
+		}
+
+		filereader.close();
+
+		return userpwd;
 	}
 
 	/**
@@ -131,6 +162,30 @@ public class ServerLogic {
 	}
 
 	/**
+	 * Follows or Unfollows numUsers users
+	 * @param numUsers
+	 * @param option 0 if follow new users 1 if unfollow users
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public void followUnfollowUsers(int numUsers, int option) throws IOException, ClassNotFoundException {
+
+		int counter = 0;
+
+		while( counter < numUsers ) {
+			String userToFollowUnfollow = (String) inputStream.readObject();
+
+			if (option == 0)
+				followUser(userToFollowUnfollow);
+			if (option == 1)
+				unfollowUser(userToFollowUnfollow);
+
+			counter++;
+		}
+
+	}
+
+	/**
 	 * Creates "metafile" for the photo
 	 *
 	 * @param photoName
@@ -174,7 +229,7 @@ public class ServerLogic {
 	public void listPhotos(String userId) {
 
 		try {
-			int isFollower = isFollower(userId);
+			int isFollower = isFollowerOf(userId);
 
 			if (isFollower == 0) {
 				outputStream.writeObject(new Integer(isFollower));
@@ -202,7 +257,7 @@ public class ServerLogic {
 	 */
 	public void commentPhoto(String comment, String userId, String photoName) {
 
-		int isFollower = isFollower(userId);
+		int isFollower = isFollowerOf(userId);
 
 		try {
 			if (isFollower == 0) {
@@ -246,7 +301,7 @@ public class ServerLogic {
 	public void downloadPhotos(String userId) {
 
 		try {
-			int isFollower = isFollower(userId);
+			int isFollower = isFollowerOf(userId);
 			outputStream.writeObject(new Integer(isFollower));
 
 			if (isFollower == 0) {
@@ -280,7 +335,7 @@ public class ServerLogic {
 	public void fetchComments(String userId, String photoName) {
 
 		try {
-			int isFollower = isFollower(userId);
+			int isFollower = isFollowerOf(userId);
 
 			outputStream.writeObject(new Integer(isFollower));
 			if (isFollower == 0) {
@@ -304,10 +359,18 @@ public class ServerLogic {
 
 	}
 
-	public void incrementStats(String userId, String photoName, int posCounter) {
+	/**
+	 * Increments like or dislike (depending on posToChange)
+	 * @param userId
+	 * @param photoName
+	 * @param posToChange if 0: increments like, if 1 increments dislike
+	 *
+	 * @requires posToChange 0 or 1
+	 */
+	public void incrementLikeDislike(String userId, String photoName, int posToChange) {
 
         String photometapath = getPhotoMetaPath(userId, photoName);
-        int isFollower = isFollower(userId);
+        int isFollower = isFollowerOf(userId);
 
         try {
 
@@ -325,8 +388,8 @@ public class ServerLogic {
 
                     String likesDislikes = buffReader.readLine();
                     String[] counters = likesDislikes.split(":");
-                    int data = Integer.parseInt(counters[posCounter]) + 1;
-                    counters[posCounter] = Integer.toString(data);
+                    int data = Integer.parseInt(counters[posToChange]) + 1;
+                    counters[posToChange] = Integer.toString(data);
                     fwriter.write(counters[0] + ":" + counters[1] + "\n");
 
                     String line = buffReader.readLine();
@@ -373,7 +436,7 @@ public class ServerLogic {
 			String line;
 
 			if (isUser(userToFollow)) {
-				if(!userIsFollowed(userToFollow, followers)) {
+				if(!userIsFollowedBy(userToFollow, followers)) {
 					fwriter.write(userToFollow + "\n");
 					outputStream.writeObject(new Integer(0));
 				} else {
@@ -394,13 +457,13 @@ public class ServerLogic {
 	}
 
 	/**
-	 * Check if local user follows userToFollow
-	 * @param userToFollow
+	 * Check if local user follows otherUser
+	 * @param otherUser
 	 * @param followers
-	 * @return true if userToFollow is already followed
+	 * @return true if otherUser is already followed
 	 * @throws IOException
 	 */
-	private boolean userIsFollowed(String userToFollow, File followers) throws IOException {
+	private boolean userIsFollowedBy(String otherUser, File followers) throws IOException {
 
 		BufferedReader freader = new BufferedReader(new FileReader(followers));
 		String line = freader.readLine();
@@ -408,7 +471,7 @@ public class ServerLogic {
 		boolean userFound = false;
 
 		while (line != null && !userFound) {
-			if (userToFollow.equals(line)) {
+			if (otherUser.equals(line)) {
 				userFound = true;
 			}
 
@@ -420,7 +483,7 @@ public class ServerLogic {
 	}
 
 	/**
-	 *
+	 * Removes a user from follower (if he was a follower)
 	 * @param userToUnfollow
 	 */
 	private void unfollowUser (String userToUnfollow) {
@@ -434,7 +497,7 @@ public class ServerLogic {
 				outputStream.writeObject(3); // nao se pode fazer unfollow a si mesmo
 			}
 
-			if(userIsFollowed(userToUnfollow, followers)) {
+			if(userIsFollowedBy(userToUnfollow, followers)) {
 				File tmp = new File(followersPath + ".tmp");
 				BufferedReader readFollowers = new BufferedReader(new FileReader(followers));
 				BufferedWriter writeTmp = new BufferedWriter(new FileWriter(tmp));
@@ -467,37 +530,6 @@ public class ServerLogic {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	/**
-	 * Loads users and passwords from the passwords file (provided by passwordsPath)
-	 * @return HashMap<User, Password> containing all users and corresponding password
-	 *
-	 @throws IOException
-	 */
-	private HashMap<String, String> loadPasswords() throws IOException {
-
-		BufferedReader filereader = new BufferedReader(new FileReader(this.passwordsPath));
-
-		String line = filereader.readLine();
-
-		// HashMap <User, Password>
-		HashMap<String, String> userpwd = new HashMap<>();
-		String tokenised[];
-		// user;password
-		while (line != null) {
-
-			tokenised = line.split(":");
-
-			userpwd.put(tokenised[0], tokenised[1]);
-
-			line = filereader.readLine();
-
-		}
-
-		filereader.close();
-
-		return userpwd;
 	}
 
 	/**
@@ -558,7 +590,7 @@ public class ServerLogic {
 
 
 	/**
-	 * Each user has a folder with his photos. This method returns all photos listed on an ArrayList
+	 * Each user has a folder with his photos. This method returns all photos on a string with the upload date
 	 * @param userIdPath
 	 * @return photo names
 	 */
@@ -604,9 +636,9 @@ public class ServerLogic {
 	 * Checks if user is a follower of userId. Being a follower means local user can see, comment, like and dislike userId's
 	 * photos
 	 * @param userId
-	 * @return 0 if user is a follower, 1 if user is not a follower, 2 if userId doesn't exist
+	 * @return 0 if user is a follower, 1 if user is not a follower, 2 if userId doesn't exist, 3 if IO error
 	 */
-	private int isFollower(String userId) {
+	private int isFollowerOf(String userId) {
 
 	    // if userId is the localuser, he got permissions
 	    if (userId.equals(this.user)) {
@@ -647,7 +679,7 @@ public class ServerLogic {
 	}
 
 	/**
-	 * Gets userId photos
+	 * Gets userId photos listed on an ArrayList
 	 * @param userIdPath path of the userId photos
 	 * @return all photo names (with extension) on an ArrayList
 	 */
@@ -790,56 +822,5 @@ public class ServerLogic {
 
 
 		return sb.toString();
-	}
-
-	/**
-	 * Creates a copy of filepath that acts as a temporary file
-	 * @param filepath
-	 * @return temporary file
-	 * @throws IOException
-	 */
-	private File makeTempFile(String filepath) throws IOException {
-		BufferedReader buffReader = new BufferedReader(new FileReader(filepath));
-		File copia = new File(filepath + ".tmp");
-		// if File doesnt exists, then create it
-		if (!copia.exists()) {
-			copia.createNewFile();
-		}
-		FileWriter filewriter = new FileWriter(copia.getAbsoluteFile());
-		BufferedWriter buffWriter = new BufferedWriter(filewriter);
-		String line;
-		while ((line = buffReader.readLine()) != null) {
-			buffWriter.write(line);
-		}
-		buffWriter.flush();
-		buffWriter.close();
-		buffReader.close();
-
-		return copia;
-	}
-
-
-	/**
-	 * Follows or Unfollows numUsers users
-	 * @param numUsers
-	 * @param option 0 if follow new users 1 if unfollow users
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public void followUnfollowUsers(int numUsers, int option) throws IOException, ClassNotFoundException {
-
-		int counter = 0;
-
-		while( counter < numUsers ) {
-			String userToFollowUnfollow = (String) inputStream.readObject();
-
-			if (option == 0)
-				followUser(userToFollowUnfollow);
-			if (option == 1)
-				unfollowUser(userToFollowUnfollow);
-
-			counter++;
-		}
-
 	}
 }
