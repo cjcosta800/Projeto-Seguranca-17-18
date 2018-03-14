@@ -8,7 +8,7 @@ public class ClientLogic {
 	private String currUser;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
-	private final String CLIENT_PATH = "./PhotoShareClient/";
+	private final String CLIENT_PATH = "../PhotoShareClient/";
 
 	public ClientLogic(String currUser, Socket socket, ObjectOutputStream outStream, ObjectInputStream inStream) {
 		this.currUser = currUser;

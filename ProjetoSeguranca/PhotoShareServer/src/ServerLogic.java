@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class ServerLogic {
-	private final String serverPath = "./PhotoShareServer/PhotoShare/";
+	private final String SERVER_PATH = "../PhotoShareServer/PhotoShare/";
 
 	private String passwordsPath;
 	private HashMap<String, String> userPwd;
@@ -16,6 +16,11 @@ public class ServerLogic {
 
 	public ServerLogic(String passwordsPath, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
+		File serPath = new File(SERVER_PATH);
+		if(!serPath.isDirectory()) {
+			serPath.mkdirs();
+		}
+
 		this.passwordsPath = passwordsPath;
 		verifyPasswordsFile();
 		this.outputStream = outputStream;
@@ -25,10 +30,10 @@ public class ServerLogic {
 
 	/**
 	 * Checks if passwordsPath points to an existing file. If it doesn't, creates a new passwords file
-	 * @param passwordsPath
 	 */
 	private void verifyPasswordsFile() {
-		File passwords = new File(passwordsPath);
+		File passwords = new File(this.passwordsPath);
+
 		if(!passwords.isFile()) {
 			try {
 				passwords.createNewFile();
@@ -56,7 +61,7 @@ public class ServerLogic {
 
 			if (userPwd.get(user).equals(password)) {
 				this.user = user;
-				this.userPath = serverPath + user;
+				this.userPath = SERVER_PATH + user;
 				return true;
 			} else
 				return false;
@@ -248,7 +253,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				outputStream.writeObject(new Integer(isFollower));
 
-				String photoList = getPhotoList(serverPath + userId);
+				String photoList = getPhotoList(SERVER_PATH + userId);
 
 				outputStream.writeObject(photoList);
 			} else {
@@ -320,7 +325,7 @@ public class ServerLogic {
 
 			if (isFollower == 0) {
 
-				String userIdPath = serverPath + userId;
+				String userIdPath = SERVER_PATH + userId;
 				ArrayList<String> photoNames = getPhotosList(userIdPath);
 
 				outputStream.writeObject(new Integer(photoNames.size()));
@@ -555,7 +560,7 @@ public class ServerLogic {
 	 */
 	private boolean registerUser(String user, String password) throws IOException {
 
-		this.userPath = serverPath + user;
+		this.userPath = SERVER_PATH + user;
 		File file = new File(userPath + "/followers.txt");
 
 		file.getParentFile().mkdirs();
@@ -581,7 +586,7 @@ public class ServerLogic {
 	 */
 	private String getPhotoMetaPath(String userid, String photoName) {
 
-		String photoMetaPath = serverPath + userid + "/" + photoName + ".txt";
+		String photoMetaPath = SERVER_PATH + userid + "/" + photoName + ".txt";
 
 		File photo = new File(photoMetaPath);
 
@@ -595,7 +600,7 @@ public class ServerLogic {
 	 */
 	private String getFollowersPath(String userId) {
 
-		String followersPath = serverPath + userId + "/" + "followers.txt";
+		String followersPath = SERVER_PATH + userId + "/" + "followers.txt";
 
 		File followers = new File(followersPath);
 
@@ -663,7 +668,7 @@ public class ServerLogic {
 
         try {
 
-            userIdFollowers = new FileReader(serverPath + userId + "/followers.txt");
+            userIdFollowers = new FileReader(SERVER_PATH + userId + "/followers.txt");
 
             BufferedReader filereader = new BufferedReader(userIdFollowers);
 
