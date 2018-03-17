@@ -33,7 +33,7 @@ public class PhotoShare {
 
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
-			ClientLogic clientLogic = new ClientLogic(currUser,socket, outStream, inStream);
+			ClientLogic clientLogic = new ClientLogic(currUser, outStream, inStream);
 
 			/* Envia o login ao servidor */
 

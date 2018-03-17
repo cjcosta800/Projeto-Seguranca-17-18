@@ -5,23 +5,20 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class ServerLogic {
-	private final String SERVER_PATH = "../PhotoShareServer/PhotoShare/";
-
-	private String passwordsPath;
+	// private final String SERVER_PATH = "../PhotoShareServer/PhotoShare/";
 	private HashMap<String, String> userPwd;
 	private String user;
 	private String userPath;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 
-	public ServerLogic(String passwordsPath, ObjectOutputStream outputStream, ObjectInputStream inputStream) {
+	public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
-		File serPath = new File(SERVER_PATH);
+		File serPath = new File(ServerPaths.SERVER_PATH);
 		if(!serPath.isDirectory()) {
 			serPath.mkdirs();
 		}
 
-		this.passwordsPath = passwordsPath;
 		verifyPasswordsFile();
 		this.outputStream = outputStream;
 		this.inputStream = inputStream;
@@ -32,7 +29,7 @@ public class ServerLogic {
 	 * Checks if passwordsPath points to an existing file. If it doesn't, creates a new passwords file
 	 */
 	private void verifyPasswordsFile() {
-		File passwords = new File(this.passwordsPath);
+		File passwords = new File(ServerPaths.PASSWORD_FILE);
 
 		if(!passwords.isFile()) {
 			try {
@@ -61,7 +58,7 @@ public class ServerLogic {
 
 			if (userPwd.get(user).equals(password)) {
 				this.user = user;
-				this.userPath = SERVER_PATH + user;
+				this.userPath = ServerPaths.SERVER_PATH + user;
 				return true;
 			} else
 				return false;
@@ -94,7 +91,7 @@ public class ServerLogic {
 	 */
 	private HashMap<String, String> loadPasswords() throws IOException {
 
-		BufferedReader filereader = new BufferedReader(new FileReader(this.passwordsPath));
+		BufferedReader filereader = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
 
 		String line = filereader.readLine();
 
@@ -133,7 +130,7 @@ public class ServerLogic {
 			return;
 		}
 
-		File newPhoto = new File(userPath + "/" + photoName);
+		File newPhoto = new File(userPath + ServerPaths.FILE_SEPARATOR + photoName);
 
 		if (!newPhoto.exists()) {
 
@@ -218,7 +215,7 @@ public class ServerLogic {
 		 * Line 4: Comment ...
 		 */
 
-		String photometapath = userPath + "/" + photoName + ".txt";
+		String photometapath = userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
@@ -253,7 +250,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				outputStream.writeObject(new Integer(isFollower));
 
-				String photoList = getPhotoList(SERVER_PATH + userId);
+				String photoList = getPhotoList(ServerPaths.SERVER_PATH + userId);
 
 				outputStream.writeObject(photoList);
 			} else {
@@ -325,7 +322,7 @@ public class ServerLogic {
 
 			if (isFollower == 0) {
 
-				String userIdPath = SERVER_PATH + userId;
+				String userIdPath = ServerPaths.SERVER_PATH + userId;
 				ArrayList<String> photoNames = getPhotosList(userIdPath);
 
 				outputStream.writeObject(new Integer(photoNames.size()));
@@ -560,13 +557,13 @@ public class ServerLogic {
 	 */
 	private boolean registerUser(String user, String password) throws IOException {
 
-		this.userPath = SERVER_PATH + user;
+		this.userPath = ServerPaths.SERVER_PATH + user;
 		File file = new File(userPath + "/followers.txt");
 
 		file.getParentFile().mkdirs();
 		file.createNewFile();
 
-		BufferedWriter fileWriter = new BufferedWriter(new FileWriter(this.passwordsPath, true));
+		BufferedWriter fileWriter = new BufferedWriter(new FileWriter(ServerPaths.PASSWORD_FILE, true));
 
 		fileWriter.write(user + ":" + password + "\n");
 
@@ -586,7 +583,7 @@ public class ServerLogic {
 	 */
 	private String getPhotoMetaPath(String userid, String photoName) {
 
-		String photoMetaPath = SERVER_PATH + userid + "/" + photoName + ".txt";
+		String photoMetaPath = ServerPaths.SERVER_PATH + userid + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 
 		File photo = new File(photoMetaPath);
 
@@ -600,7 +597,7 @@ public class ServerLogic {
 	 */
 	private String getFollowersPath(String userId) {
 
-		String followersPath = SERVER_PATH + userId + "/" + "followers.txt";
+		String followersPath = ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR + "followers.txt";
 
 		File followers = new File(followersPath);
 
@@ -635,7 +632,7 @@ public class ServerLogic {
 	 */
 	private String uploadDate(String photometafile, String userIdPath) {
 		try {
-			BufferedReader freader = new BufferedReader(new FileReader(userIdPath + "/" + photometafile));
+			BufferedReader freader = new BufferedReader(new FileReader(userIdPath + ServerPaths.FILE_SEPARATOR + photometafile));
 
 			String result = freader.readLine();
 			freader.close();
@@ -668,7 +665,7 @@ public class ServerLogic {
 
         try {
 
-            userIdFollowers = new FileReader(SERVER_PATH + userId + "/followers.txt");
+            userIdFollowers = new FileReader(ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR + "followers.txt");
 
             BufferedReader filereader = new BufferedReader(userIdFollowers);
 
@@ -762,7 +759,7 @@ public class ServerLogic {
 	 */
 	private void sendPhoto(String photoName, String userIdPath) {
 		try {
-			File photo = new File(userIdPath + "/" + photoName);
+			File photo = new File(userIdPath + ServerPaths.FILE_SEPARATOR + photoName);
 			sendFile(photo);
 
 		} catch (FileNotFoundException e) {
@@ -781,9 +778,9 @@ public class ServerLogic {
 	 */
 	private void sendComments(String photo, String userIdPath) {
 
-		String photoMetaFile = userIdPath + "/" + photo + ".txt";
+		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photo + ".txt";
 		//photo-comments.txt
-		String photoCommentsTmp = userIdPath + "/" + photo + "-comments.txt";
+		String photoCommentsTmp = userIdPath + ServerPaths.FILE_SEPARATOR + photo + "-comments.txt";
 
 		try {
 			BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoCommentsTmp));

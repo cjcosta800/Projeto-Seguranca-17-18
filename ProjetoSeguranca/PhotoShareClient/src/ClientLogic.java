@@ -1,5 +1,4 @@
 import java.io.*;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -8,9 +7,9 @@ public class ClientLogic {
 	private String currUser;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
-	private final String CLIENT_PATH = "../PhotoShareClient/";
+//	private final String CLIENT_PATH = "../PhotoShareClient/";
 
-	public ClientLogic(String currUser, Socket socket, ObjectOutputStream outStream, ObjectInputStream inStream) {
+	public ClientLogic(String currUser, ObjectOutputStream outStream, ObjectInputStream inStream) {
 		this.currUser = currUser;
 		this.outputStream = outStream;
 		this.inputStream = inStream;
@@ -55,7 +54,7 @@ public class ClientLogic {
 
             photoName = photoNames.get(i);
 
-            photo = new File(CLIENT_PATH + photoName);
+            photo = new File(ClientPaths.CLIENT_PATH + photoName);
 
 			// Photo exists locally
 			if(photo.exists()) {
@@ -175,7 +174,7 @@ public class ClientLogic {
         int isFollower = (Integer) inputStream.readObject();
 
         if (isFollower == 0) {
-            String receivePath = CLIENT_PATH + userId + "/";
+            String receivePath = ClientPaths.CLIENT_PATH + userId + ClientPaths.FILE_SEPARATOR;
             File receiveP = new File(receivePath);
 
             if (!receiveP.isDirectory()) {

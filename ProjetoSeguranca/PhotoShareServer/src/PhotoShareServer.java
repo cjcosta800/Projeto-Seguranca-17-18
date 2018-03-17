@@ -72,7 +72,7 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				ServerLogic serverLogic = new ServerLogic("../PhotoShareServer/PhotoShare/passwords.txt", outStream, inStream);
+				ServerLogic serverLogic = new ServerLogic(outStream, inStream);
 
 				String user = null;
 				String password = null;
