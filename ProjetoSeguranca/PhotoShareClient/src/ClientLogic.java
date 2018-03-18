@@ -54,7 +54,7 @@ public class ClientLogic {
 
             photoName = photoNames.get(i);
 
-            photo = new File(ClientPaths.CLIENT_PATH + photoName);
+            photo = new File(photoName);
 
 			// Photo exists locally
 			if(photo.exists()) {
@@ -174,7 +174,7 @@ public class ClientLogic {
         int isFollower = (Integer) inputStream.readObject();
 
         if (isFollower == 0) {
-            String receivePath = ClientPaths.CLIENT_PATH + userId + ClientPaths.FILE_SEPARATOR;
+            String receivePath = userId + ClientPaths.FILE_SEPARATOR;
             File receiveP = new File(receivePath);
 
             if (!receiveP.isDirectory()) {
