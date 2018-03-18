@@ -2,7 +2,7 @@ Para compilar o cliente e o servidor:
 ./compile.sh
 
 Para correr o servidor:
-java -Djava.security.manager -Djava.security.policy==PhotoShareServer/src/server.policy -cp out/ PhotoShareServer 23232
+java -Djava.security.manager -Djava.security.policy==PhotoShareServer/src/server.policy -cp PhotoShareServer/out/ PhotoShareServer 23232
 
 Para correr o cliente:
     - Criar novo utilizador:
