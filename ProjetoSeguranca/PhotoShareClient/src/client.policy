@@ -1,3 +1,19 @@
 grant codeBase "file:out/" {
 
+permission java.net.SocketPermission "*:1024-", "connect";
+permission java.net.SocketPermission "*:1024-", "resolve";
+
+permission java.io.FilePermission "/", "read";
+permission java.io.FilePermission "/", "write";
+
+permission java.io.FilePermission "/-", "read";
+permission java.io.FilePermission "/-", "write";
+
+permission java.io.FilePermission "$(user.dir)/-", "read";
+permission java.io.FilePermission "$(user.dir)/-", "write";
+
+permission java.util.PropertyPermission "user.dir", "read";
+permission java.util.PropertyPermission "user.dir", "write";
+
+
 };
