@@ -1,14 +1,22 @@
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+package PhotoShareServer.src;
 
-import javax.crypto.SecretKey;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Random;
+import java.security.SecureRandom;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.SecretKeyFactory;
 
 public class manUsers {
 
-	public final Random RANDOM_ = new SecureRandom();
-	
+	private HashMap<String, String> userPwd;
+	private String user;
+	private String userPath;
+	public static final Random RANDOM = new SecureRandom();
+	private final String SERVER_PATH = "../PhotoShareServer/PhotoShare/";
+
 	public boolean getAuthenticated(String user, String password) throws IOException {
 
 		this.userPwd = loadPasswords();
@@ -50,15 +58,41 @@ public class manUsers {
 		return true;
 
 	}
+	private HashMap<String, String> loadPasswords() throws IOException {
+
+		BufferedReader filereader = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
+
+		String line = filereader.readLine();
+
+		// HashMap <User, Password>
+		HashMap<String, String> userpwd = new HashMap<>();
+		String tokenised[];
+		// user;password
+		while (line != null) {
+
+			tokenised = line.split(":");
+
+			userpwd.put(tokenised[0], tokenised[1]);
+
+			line = filereader.readLine();
+
+		}
+
+		filereader.close();
+
+		return userpwd;
+	}
 	  //necessario tratar de possiveis erros a fazer o salted hash?
-	  public static byte[] getSaltedHashedPassword(String password){
-		  
-		    byte[] salt = new byte[32];
-		    RANDOM.nextBytes(salt);
-		    
-		    PBEKeySpec passSpec = new PBEKeySpec(password.toCharArray(),salt,20);
-		    SecretKeyFactory secPass = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
-		    
-		    return pass.generateSecret(passSpec).getEncoded();
+	  public static byte[] getSaltedHashedPassword(String password) {
+
+		  byte[] salt = new byte[32];
+		  RANDOM.nextBytes(salt);
+		  try {
+			  PBEKeySpec passSpec = new PBEKeySpec(password.toCharArray(), salt, 20);
+			  SecretKeyFactory secPass = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+			  return secPass.generateSecret(passSpec).getEncoded();
+		  } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+			  throw new AssertionError("Erro ao fazer hash a uma password:" + e.getMessage(), e);
 		  }
+	  }
 }
