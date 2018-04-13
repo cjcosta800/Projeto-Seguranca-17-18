@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 public class ServerSecurity {
 
     private static final int AES_KEY_SIZE = 128;
-    private static final String CIPHER_AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+    private static final String CIPHER_AES_TRANSFORMATION = "AES";
 
     private KeyGenerator AESKeyGen;
     private String currentUser;
