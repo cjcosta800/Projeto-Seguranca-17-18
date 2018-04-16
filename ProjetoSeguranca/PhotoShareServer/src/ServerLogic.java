@@ -149,7 +149,6 @@ public class ServerLogic {
 			byte[] buffer = new byte[photoSize];
 
 			Cipher cipher = security.getCipher(photoName);
-
 			FileOutputStream fos = new FileOutputStream(newPhoto);
 			CipherOutputStream writeCipherFile = new CipherOutputStream(fos, cipher);
 			int byteread = 0;
@@ -176,7 +175,8 @@ public class ServerLogic {
 	 *
 	 * @param numPhotos
 	 */
-	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException,
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
 
 		for (int i = 0; i < numPhotos; i++) {
 
@@ -214,7 +214,8 @@ public class ServerLogic {
 	 * Creates "metafile" for the photo
 	 *
 	 * @param photoName
-	 * @throws IOException
+	 * @param cipher
+     * @throws IOException
 	 */
 	private void createPhotoMetaFile(String photoName, Cipher cipher) throws IOException {
 
@@ -223,13 +224,12 @@ public class ServerLogic {
 		 * Line 3: Comment
 		 * Line 4: Comment ...
 		 */
-
 		String photometapath = userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
-
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-		BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath));
+        CipherOutputStream cos = new CipherOutputStream(new FileOutputStream(photometapath), cipher);
+        PrintWriter fwriter = new PrintWriter(new OutputStreamWriter(cos));
 
 		// writes date as: 04 July 2001 12:08:56
 		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");
@@ -240,11 +240,8 @@ public class ServerLogic {
 		fwriter.write(date + "\n");
 		// write likes and dislikes (both starting at 0)
 		fwriter.write("0:0\n");
-
 		fwriter.flush();
-
 		fwriter.close();
-
 	}
 
 	/**
