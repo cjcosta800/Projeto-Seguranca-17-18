@@ -1,12 +1,15 @@
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 public class PhotoShareServer {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 
 		/* Check number of args. Must be 1 */
 		if (args.length != 1) {
@@ -185,6 +188,12 @@ public class PhotoShareServer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (NoSuchPaddingException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (InvalidKeyException e) {
 				e.printStackTrace();
 			}
 
