@@ -1,17 +1,13 @@
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class ServerSecurity {
 
-    private static final int AES_KEY_SIZE = 128;
-    private static final String CIPHER_AES_TRANSFORMATION = "AES";
+    private static final int AES_KEY_SIZE_BITS = 128;
+    private static final int AES_KEY_SIZE_BYTES = 16;
 
     private KeyGenerator AESKeyGen;
     private String currentUser;
@@ -21,29 +17,53 @@ public class ServerSecurity {
         this.AESKeyGen = KeyGenerator.getInstance("AES");
     }
 
-    public Cipher getCipher(String filename) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IOException {
+    /**
+     * Given a clear array and a filename (to get the cipher key), this will cipher the clear 'text'
+     * @param clear
+     * @param filename
+     * @return ciphered text
+     */
+    public byte[] cipher(byte[] clear, String filename) throws NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
 
-        Cipher c = Cipher.getInstance(CIPHER_AES_TRANSFORMATION);
-        SecretKey generatedKey = generateKey();
-        c.init(Cipher.ENCRYPT_MODE, generatedKey);
+        byte[] keyByted = getByteKeyFromFile(filename);
+        SecretKeySpec keySpec = new SecretKeySpec(keyByted, "AES");
 
-        saveKey(generatedKey, filename);
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
 
-        return c;
-    }
-
-    public Cipher getDecipher(String filename) {
-        // TODO
-        return null;
+        return cipher.doFinal(clear);
     }
 
     /**
-     *
+     * Given a ciphered byte array and a file name (to get the key) it will decipher the
+     * byte array
+     * @param ciphered
+     * @param filename
+     * @return clear byte array
+     */
+    public byte[] decipher(byte[] ciphered, String filename) throws BadPaddingException,
+            IllegalBlockSizeException, InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+
+        byte[] keyByted = getByteKeyFromFile(filename);
+        SecretKeySpec keySpec = new SecretKeySpec(keyByted, "AES");
+
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, keySpec);
+
+        return cipher.doFinal(ciphered);
+    }
+
+    /**
+     * Generates an AES key and saves it on a filename.key
+     * @param filename name of the file that will have a correspondent key file
      * @return
      */
-    private SecretKey generateKey() {
-        AESKeyGen.init(AES_KEY_SIZE);
-        return AESKeyGen.generateKey();
+    public void generateAESKey(String filename) throws IOException {
+        AESKeyGen.init(AES_KEY_SIZE_BITS);
+        SecretKey key = AESKeyGen.generateKey();
+
+        saveKey(key, filename);
     }
 
     /**
@@ -60,6 +80,40 @@ public class ServerSecurity {
         ObjectOutputStream writeKeyFile = new ObjectOutputStream(keyFile);
         writeKeyFile.write(keyEncoded);
         writeKeyFile.close();
+    }
+
+    /**
+     * Given a filename it will get the bytes from a filename.key file
+     * @param filename
+     * @return bytes from a filename.key file
+     */
+    private byte[] getByteKeyFromFile(String filename) {
+        FileInputStream kis;
+        ObjectInputStream ois;
+        byte[] key = new byte[AES_KEY_SIZE_BYTES];
+        int resultFromRead;
+
+        try {
+            kis = new FileInputStream(ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR +
+                    currentUser + ServerPaths.FILE_SEPARATOR + filename + ".key");
+            ois = new ObjectInputStream(kis);
+
+            resultFromRead = ois.read(key);
+            if(resultFromRead == -1) {
+                throw new IOException("Error while reading key from file (read = -1)");
+            }
+
+            ois.close();
+
+            return key;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 

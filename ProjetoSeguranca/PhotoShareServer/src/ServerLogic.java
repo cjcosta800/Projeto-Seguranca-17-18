@@ -1,6 +1,4 @@
-import javax.crypto.Cipher;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -127,7 +125,9 @@ public class ServerLogic {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public void receivePhoto() throws IOException, ClassNotFoundException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+	public void receivePhoto() throws IOException, ClassNotFoundException,
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException {
 
 		// recebe "pergunta" se o cliente pode comecar a enviar. Particularmente importante para o caso de varias fotos
 		String photoName = (String) inputStream.readObject();
@@ -144,24 +144,24 @@ public class ServerLogic {
 			outputStream.writeObject(new Boolean(false));
 			// recebe tamanho da foto
 			int photoSize = inputStream.readInt();
+			// generate AES key
+            security.generateAESKey(photoName);
 
 			newPhoto.createNewFile();
 			byte[] buffer = new byte[photoSize];
-
-			Cipher cipher = security.getCipher(photoName);
 			FileOutputStream fos = new FileOutputStream(newPhoto);
-			CipherOutputStream writeCipherFile = new CipherOutputStream(fos, cipher);
 			int byteread = 0;
+			// reads all bytes from stream to an array
+			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1);
+			// cipher array
+            byte[] photocipher = security.cipher(buffer, photoName);
+            // writes ciphered photo to photo file
+            fos.write(photocipher);
+            fos.flush();
+            fos.close();
 
-			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
-				writeCipherFile.write(buffer, 0, byteread);
-			}
 			// writes new meta file
-			createPhotoMetaFile(photoName, cipher);
-
-			writeCipherFile.flush();
-			writeCipherFile.close();
-			fos.close();
+			createPhotoMetaFile(photoName);
 
 		} else {
 			// caso a foto ja esteja presente no servidor... envia-se uma mensagem de erro, neste caso bool false
@@ -176,7 +176,8 @@ public class ServerLogic {
 	 * @param numPhotos
 	 */
 	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException,
-            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException {
 
 		for (int i = 0; i < numPhotos; i++) {
 
@@ -214,34 +215,38 @@ public class ServerLogic {
 	 * Creates "metafile" for the photo
 	 *
 	 * @param photoName
-	 * @param cipher
      * @throws IOException
 	 */
-	private void createPhotoMetaFile(String photoName, Cipher cipher) throws IOException {
+	private void createPhotoMetaFile(String photoName) throws IOException,
+            IllegalBlockSizeException, InvalidKeyException, NoSuchPaddingException,
+            NoSuchAlgorithmException, BadPaddingException {
 
 		/* Line 1: Current date
 		 * Line 2: Likes:Dislikes
 		 * Line 3: Comment
 		 * Line 4: Comment ...
 		 */
-		String photometapath = userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
+		String photometapath = this.userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-        CipherOutputStream cos = new CipherOutputStream(new FileOutputStream(photometapath), cipher);
-        PrintWriter fwriter = new PrintWriter(new OutputStreamWriter(cos));
+        FileOutputStream fos = new FileOutputStream(photometapath);
+        StringBuilder sb = new StringBuilder();
 
 		// writes date as: 04 July 2001 12:08:56
 		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");
 		Date now = new Date();
-		String date = sdfDate.format(now);
-
-		// write current date
-		fwriter.write(date + "\n");
-		// write likes and dislikes (both starting at 0)
-		fwriter.write("0:0\n");
-		fwriter.flush();
-		fwriter.close();
+		// saves current date
+		sb.append(sdfDate.format(now)).append("\n");
+		// writes likes and dislikes (both starting at 0)
+		sb.append("0:0\n");
+		String result = sb.toString();
+		// ciphers text
+		byte[] cipherText = security.cipher(result.getBytes(), photoName);
+		// writes ciphered text to a file
+		fos.write(cipherText);
+		fos.flush();
+		fos.close();
 	}
 
 	/**
@@ -256,7 +261,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				outputStream.writeObject(new Integer(isFollower));
 
-				String photoList = getPhotoList(ServerPaths.SERVER_PATH + userId);
+				String photoList = getPhotoList(ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR);
 
 				outputStream.writeObject(photoList);
 			} else {
@@ -623,7 +628,7 @@ public class ServerLogic {
 		ArrayList<String> photoNames = getPhotosList(userIdPath);
 
 		for (String photo : photoNames) {
-			sb.append(photo + " was uploaded at " + uploadDate(photo + ".txt", userIdPath) +"\n");
+			sb.append(photo + " was uploaded at ").append(uploadDate(photo, userIdPath) +"\n");
 
 		}
 
@@ -632,26 +637,38 @@ public class ServerLogic {
 
 	/**
 	 * Returns the upload date of a photo
-	 * @param photometafile
+	 * @param photoName
 	 * @param userIdPath
 	 * @return upload date of a photo
 	 */
-	private String uploadDate(String photometafile, String userIdPath) {
+	private String uploadDate(String photoName, String userIdPath) {
 		try {
-			BufferedReader freader = new BufferedReader(new FileReader(userIdPath + ServerPaths.FILE_SEPARATOR + photometafile));
+			FileInputStream fis = new FileInputStream(userIdPath + photoName + ".txt");
+			byte[] ciphered = new byte[fis.available()];
+            fis.read(ciphered);
+            fis.close();
 
-			String result = freader.readLine();
-			freader.close();
-
-			return result;
+			byte[] original = security.decipher(ciphered, photoName);
+            // return date (line 1)
+			return new String(original).split("\n")[0];
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        }
 
-		return null;
+        return null;
 	}
 
 	/**
