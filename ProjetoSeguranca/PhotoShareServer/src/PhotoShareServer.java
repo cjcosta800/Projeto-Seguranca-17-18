@@ -7,7 +7,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 public class PhotoShareServer {
 
@@ -200,6 +202,10 @@ public class PhotoShareServer {
 			} catch (BadPaddingException e) {
 				e.printStackTrace();
 			} catch (IllegalBlockSizeException e) {
+				e.printStackTrace();
+			} catch (CertificateException e) {
+				e.printStackTrace();
+			} catch (KeyStoreException e) {
 				e.printStackTrace();
 			}
 

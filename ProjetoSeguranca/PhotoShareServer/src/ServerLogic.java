@@ -1,7 +1,9 @@
 import javax.crypto.*;
 import java.io.*;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,7 +56,8 @@ public class ServerLogic {
 	 * false if incorrect password
 	 * @throws IOException
 	 */
-	public boolean getAuthenticated(String user, String password) throws IOException, NoSuchAlgorithmException {
+	public boolean getAuthenticated(String user, String password) throws IOException, NoSuchAlgorithmException,
+			CertificateException, KeyStoreException {
 
 		this.userPwd = loadPasswords();
 
@@ -177,7 +180,7 @@ public class ServerLogic {
 	 */
 	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException,
             NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
-            BadPaddingException, IllegalBlockSizeException {
+            BadPaddingException, IllegalBlockSizeException, KeyStoreException {
 
 		for (int i = 0; i < numPhotos; i++) {
 
@@ -656,17 +659,7 @@ public class ServerLogic {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        }
+		}
 
         return null;
 	}
