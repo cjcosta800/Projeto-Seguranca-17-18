@@ -1,4 +1,6 @@
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -8,6 +10,9 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 public class PhotoShareServer {
+
+
+	final static String password = "654321";
 
 	public static void main(String[] args) throws IOException {
 
@@ -25,7 +30,12 @@ public class PhotoShareServer {
 			System.exit(0);
 		}
 
+
 		System.out.println("Listening for new connections at " + args[0] + "...");
+
+		System.setProperty("javax.net.ssl.keyStore",ServerPaths.SSLKEYSTORE_FILE);
+		System.setProperty("javax.net.ssl.keyStorePassword", password);
+
 		PhotoShareServer photoShareServer = new PhotoShareServer();
 		photoShareServer.startServer(socket);
 
@@ -34,12 +44,13 @@ public class PhotoShareServer {
 
 	public void startServer(int socket) {
 
-		ServerSocket sSoc = null;
+		SSLServerSocketFactory sslfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+		SSLServerSocket ssl = null;
 
 		try {
-			sSoc = new ServerSocket(socket);
+			ssl = (SSLServerSocket) sslfact.createServerSocket(socket);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -47,7 +58,7 @@ public class PhotoShareServer {
 		while(true) {
 			Socket inSoc = null;
 			try {
-				inSoc = sSoc.accept();
+				inSoc = ssl.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
 			} catch (IOException e) {

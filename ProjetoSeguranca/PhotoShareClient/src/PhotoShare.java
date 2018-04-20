@@ -1,3 +1,7 @@
+import com.sun.security.ntlm.Client;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -7,6 +11,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class PhotoShare {
+
+	final static String password = "654321";
 
 	public static void main(String[] args) {
 
@@ -21,6 +27,9 @@ public class PhotoShare {
 			System.exit(0);
 		}
 
+		System.setProperty("javax.net.ssl.trustStore",ClientPaths.SSLTRUSTSTORE_FILE);
+
+
 
 		String currUser = args[0];
 		String password = args[1];
@@ -29,7 +38,7 @@ public class PhotoShare {
 		int port = Integer.parseInt(serverAddress[1]);
 		try {
 
-			Socket socket = startClient(ip,port);
+			SSLSocket socket = startClient(ip,port);
 
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -125,16 +134,17 @@ public class PhotoShare {
 	}
 
 
-	public static Socket startClient(String ip, int port) throws IOException {
+	public static SSLSocket startClient(String ip, int port) throws IOException {
 
-		Socket socket = null;
+		SSLSocketFactory sslfact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		SSLSocket ssl = null;
 
-		socket = new Socket(ip, port);
+		ssl = (SSLSocket) sslfact.createSocket(ip, port);
 
-		if(socket.isConnected())
+		if(ssl.isConnected())
 		    System.out.println("Connected.");
 
-		return socket;
+		return ssl;
 	}
 
 
