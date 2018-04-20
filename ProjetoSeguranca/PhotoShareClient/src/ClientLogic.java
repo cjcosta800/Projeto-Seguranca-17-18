@@ -338,15 +338,17 @@ public class ClientLogic {
             int photoSize = (Integer) inputStream.readObject();
 
             newFile.createNewFile();
-            byte[] buffer = new byte[photoSize];
+//            byte[] buffer = new byte[photoSize];
 
             FileOutputStream fos = new FileOutputStream(newFile);
             BufferedOutputStream writefile = new BufferedOutputStream(fos);
             int byteread = 0;
 
-            while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
+            /*while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
                 writefile.write(buffer, 0, byteread);
-            }
+            }*/
+            byte[] buffer = (byte[]) inputStream.readObject();
+            writefile.write(buffer);
             writefile.flush();
             writefile.close();
             fos.close();

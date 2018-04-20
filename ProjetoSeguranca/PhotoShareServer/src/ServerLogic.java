@@ -742,30 +742,22 @@ public class ServerLogic {
 	/**
 	 * Sends a file to client
 	 * @param file file to be sent to client
+     * @param filename name of the file to be sent to the client
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private void sendFile(File file) throws IOException, ClassNotFoundException {
-		FileInputStream fileOut = new FileInputStream(file);
-		BufferedInputStream readFileBytes = new BufferedInputStream(fileOut);
+	private void sendFile(byte[] file, String filename) throws IOException, ClassNotFoundException {
 
-		outputStream.writeObject(new String(file.getName()));
+		outputStream.writeObject(new String(filename));
 
 		Boolean canProceed = (Boolean) inputStream.readObject();
 
 		if(canProceed) {
-			outputStream.writeObject(new Integer((int)file.length()));
-
-			byte buffer[] = new byte[(int) file.length()];
-
-			readFileBytes.read(buffer, 0, buffer.length);
-
-			outputStream.write(buffer,0, buffer.length);
+			outputStream.writeObject(new Integer(file.length));
+            outputStream.writeObject(file);
+//			outputStream.write(file,0, file.length);
 			outputStream.flush();
 		}
-
-		readFileBytes.close();
-		fileOut.close();
 	}
 
 	/**
@@ -774,9 +766,18 @@ public class ServerLogic {
 	 * @param userIdPath
 	 */
 	private void sendPhoto(String photoName, String userIdPath) {
+
+	    String photoPath = userIdPath + ServerPaths.FILE_SEPARATOR + photoName;
+
 		try {
-			File photo = new File(userIdPath + ServerPaths.FILE_SEPARATOR + photoName);
-			sendFile(photo);
+			FileInputStream fis = new FileInputStream(photoPath);
+			byte[] cipheredFile = new byte[fis.available()];
+			fis.read(cipheredFile);
+			fis.close();
+
+			byte[] originalPhoto = security.decipher(cipheredFile, photoName);
+
+            sendFile(originalPhoto, photoName);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -789,29 +790,24 @@ public class ServerLogic {
 
 	/**
 	 * Sends photo comments (and likes/dislikes) to client
-	 * @param photo
+	 * @param photoName
 	 * @param userIdPath
 	 */
-	private void sendComments(String photo, String userIdPath) {
+	private void sendComments(String photoName, String userIdPath) {
 
-		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photo + ".txt";
+		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 		//photo-comments.txt
-		String photoCommentsTmp = userIdPath + ServerPaths.FILE_SEPARATOR + photo + "-comments.txt";
+		String photoComments = photoName + "-comments.txt";
 
 		try {
-			BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoCommentsTmp));
+		    FileInputStream fis = new FileInputStream(photoMetaFile);
+            byte[] cipheredFile = new byte[fis.available()];
+            fis.read(cipheredFile);
+            fis.close();
 
-			String comments = getComments(photoMetaFile);
+            byte[] originalPhoto = security.decipher(cipheredFile, photoName);
 
-			fwriter.write(comments);
-
-			fwriter.flush();
-			fwriter.close();
-
-			// sends photo comments and then deletes it
-			File photoComments = new File(photoCommentsTmp);
-			sendFile(photoComments);
-			photoComments.delete();
+            sendFile(originalPhoto, photoComments);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
