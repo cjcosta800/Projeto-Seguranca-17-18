@@ -371,7 +371,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				String photoMetaPath = getPhotoMetaPath(userId, photoName);
 				if(photoMetaPath != null) {
-					String comments = getComments(photoMetaPath);
+					String comments = getComments(photoName);
 					outputStream.writeObject(new Integer(0));
 
 					outputStream.writeObject(new String(comments));
@@ -825,34 +825,38 @@ public class ServerLogic {
 
 	/**
 	 * Gets photo comments, likes and dislikes from photo "meta file" and puts them on a String
-	 * @param photoMetaFilePath
+	 * @param photoName
 	 * @return string containing comments, likes and dislikes
 	 * @throws IOException
 	 */
-	private String getComments(String photoMetaFilePath) throws IOException {
+	private String getComments(String photoName) throws IOException {
 
-		StringBuilder sb = new StringBuilder();
-		BufferedReader freader = new BufferedReader(new FileReader(photoMetaFilePath));
+        StringBuilder sb = new StringBuilder();
+        FileInputStream fis = new FileInputStream(userPath + ServerPaths.FILE_SEPARATOR +
+            photoName + ".txt");
+        byte[] cipheredfile = new byte[fis.available()];
+        fis.read(cipheredfile);
+        fis.close();
+        // photoMetaFilePath.split(".txt")[0] removes the .txt from photoMetaFilePath
+        byte[] originalText = security.decipher(cipheredfile, photoName);
+        String clearFile = new String(originalText);
+        String[] lines = clearFile.split("\n");
 
-		// first line is "trash"
-		freader.readLine();
-		String line = freader.readLine();
+        // first line doesn't matter within this context
+        int i = 1;
+        while (i < lines.length) {
+            if (i == 1) {
+                int likes = Integer.parseInt(lines[i].split(":")[0]);
+                int dislikes = Integer.parseInt(lines[i].split(":")[0]);
 
-		int likes = Integer.parseInt(line.split(":")[0]);
-		int dislikes = Integer.parseInt(line.split(":")[1]);
-
-		sb.append("Likes: " + likes + "\nDislikes: " + dislikes + "\n");
-		sb.append("Comments:\n");
-		// read comments
-		line = freader.readLine();
-		while(line != null) {
-			sb.append(line + "\n");
-			line = freader.readLine();
-		}
-
-		freader.close();
-
-
-		return sb.toString();
-	}
+                sb.append("Likes: ").append(likes).append("\n");
+                sb.append("Dislikes: ").append(dislikes).append("\n");
+                sb.append("Comments:\n");
+            } else {
+                sb.append(lines[i]).append("\n");
+            }
+            i++;
+        }
+        return sb.toString();
+    }
 }
