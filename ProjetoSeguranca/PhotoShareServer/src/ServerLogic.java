@@ -16,7 +16,6 @@ public class ServerLogic {
 	private String userPath;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
-    private ServerSecurity security;
 
     public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
@@ -56,7 +55,7 @@ public class ServerLogic {
 	 * false if incorrect password
 	 * @throws IOException
 	 */
-	public boolean getAuthenticated(String user, String password) throws IOException, NoSuchAlgorithmException {
+	public boolean getAuthenticated(String user, String password) throws IOException {
 
 		this.userPwd = loadPasswords();
 
@@ -65,7 +64,6 @@ public class ServerLogic {
 			if (userPwd.get(user).equals(password)) {
 				this.user = user;
 				this.userPath = ServerPaths.SERVER_PATH + user;
-				this.security = new ServerSecurity(user);
 				return true;
 			} else
 				return false;
@@ -127,7 +125,7 @@ public class ServerLogic {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public void receivePhoto() throws IOException, ClassNotFoundException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+	public void receivePhoto() throws IOException, ClassNotFoundException {
 
 		// recebe "pergunta" se o cliente pode comecar a enviar. Particularmente importante para o caso de varias fotos
 		String photoName = (String) inputStream.readObject();
@@ -148,19 +146,18 @@ public class ServerLogic {
 			newPhoto.createNewFile();
 			byte[] buffer = new byte[photoSize];
 
-			Cipher cipher = security.getCipher(photoName);
 			FileOutputStream fos = new FileOutputStream(newPhoto);
-            CipherOutputStream writeCipherFile = new CipherOutputStream(fos, cipher);
+			BufferedOutputStream writefile = new BufferedOutputStream(fos);
 			int byteread = 0;
 
 			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
-				writeCipherFile.write(buffer, 0, byteread);
+				writefile.write(buffer, 0, byteread);
 			}
 			// writes new meta file
-			createPhotoMetaFile(photoName, cipher);
+			createPhotoMetaFile(photoName);
 
-			writeCipherFile.flush();
-			writeCipherFile.close();
+			writefile.flush();
+			writefile.close();
 			fos.close();
 
 		} else {
@@ -217,7 +214,7 @@ public class ServerLogic {
 	 * @param cipher
      * @throws IOException
 	 */
-	private void createPhotoMetaFile(String photoName, Cipher cipher) throws IOException {
+	private void createPhotoMetaFile(String photoName) throws IOException {
 
 		/* Line 1: Current date
 		 * Line 2: Likes:Dislikes
@@ -228,8 +225,7 @@ public class ServerLogic {
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-        CipherOutputStream cos = new CipherOutputStream(new FileOutputStream(photometapath), cipher);
-        PrintWriter fwriter = new PrintWriter(new OutputStreamWriter(cos));
+		BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath));
 
 		// writes date as: 04 July 2001 12:08:56
 		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");
