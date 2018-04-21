@@ -296,16 +296,25 @@ public class ServerLogic {
 
 				if (photoMetaPath != null) {
 
-					BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoMetaPath, true));
-
+					FileInputStream fis = new FileInputStream(photoMetaPath);
+					byte[] cipheredfile = new byte[fis.available()];
+					fis.read(cipheredfile);
+					fis.close();
+					byte[] originalText = security.decipher(cipheredfile, photoName);
+					StringBuilder sb = new StringBuilder(new String(originalText));
 					// writes date as: 04/07/2001
 					SimpleDateFormat sdfDate = new SimpleDateFormat("dd/MM/yy");
 					Date now = new Date();
 					String date = sdfDate.format(now);
 
-					fwriter.write("[" + date + "] " + this.user + ": " + comment + "\n");
-					fwriter.flush();
-					fwriter.close();
+					sb.append("[" + date + "] " + this.user + ": " + comment + "\n");
+
+					byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+
+					FileOutputStream fos = new FileOutputStream(photoMetaPath);
+					fos.write(ciphered);
+					fos.flush();
+					fos.close();
 
 					outputStream.writeObject(new Integer(isFollower));
 
@@ -408,30 +417,34 @@ public class ServerLogic {
 
                 if (photometapath != null) {
 
-                    File metaData = new File(photometapath);
-                    File aux = new File(userPath + ".tmp");
-                    BufferedReader buffReader = new BufferedReader(new FileReader(metaData));
-                    BufferedWriter fwriter = new BufferedWriter(new FileWriter(aux));
+					FileInputStream fis = new FileInputStream(photometapath);
+					byte[] cipheredfile = new byte[fis.available()];
+					fis.read(cipheredfile);
+					fis.close();
+					String originalText = new String(security.decipher(cipheredfile, photoName));
+					String[] lines = originalText.split("\n");
+					StringBuilder sb = new StringBuilder();
 
-                    String photoDetails = buffReader.readLine();
-                    fwriter.write(photoDetails + "\n");
+					// first line contains upload date
+					sb.append(lines[0]).append("\n");
 
-                    String likesDislikes = buffReader.readLine();
-                    String[] counters = likesDislikes.split(":");
-                    int data = Integer.parseInt(counters[posToChange]) + 1;
-                    counters[posToChange] = Integer.toString(data);
-                    fwriter.write(counters[0] + ":" + counters[1] + "\n");
+					String likesDislikes = lines[1];
+					String[] counters = likesDislikes.split(":");
+					int valueIncreased = Integer.parseInt(counters[posToChange]) + 1;
+					counters[posToChange] = Integer.toString(valueIncreased);
+					sb.append(counters[0]).append(":").append(counters[1]).append("\n");
 
-                    String line = buffReader.readLine();
-                    while (line  != null) {
-                        fwriter.write(line + "\n");
-                        line = buffReader.readLine();
-                    }
+					int count = 2;
+					while(count < lines.length) {
+						sb.append(lines[count]).append("\n");
+						count++;
+					}
 
-                    fwriter.close();
-                    buffReader.close();
-                    metaData.delete();
-                    aux.renameTo(metaData);
+                    byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+                    FileOutputStream fos = new FileOutputStream(photometapath);
+                    fos.write(ciphered);
+                    fos.flush();
+                    fos.close();
 
                     outputStream.writeObject(new Integer(0)); //SUCESSO
                 } else
@@ -843,7 +856,7 @@ public class ServerLogic {
         while (i < lines.length) {
             if (i == 1) {
                 int likes = Integer.parseInt(lines[i].split(":")[0]);
-                int dislikes = Integer.parseInt(lines[i].split(":")[0]);
+                int dislikes = Integer.parseInt(lines[i].split(":")[1]);
 
                 sb.append("Likes: ").append(likes).append("\n");
                 sb.append("Dislikes: ").append(dislikes).append("\n");
