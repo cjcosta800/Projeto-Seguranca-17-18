@@ -1,5 +1,5 @@
-import com.sun.security.ntlm.Client;
-
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLKeyException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.FileNotFoundException;
@@ -7,14 +7,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class PhotoShare {
 
 	final static String password = "654321";
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SSLException, SSLKeyException {
 
 
 		if(args.length < 3) {
@@ -36,6 +35,7 @@ public class PhotoShare {
 		String[] serverAddress = args[2].split(":");
 		String ip = serverAddress[0];
 		int port = Integer.parseInt(serverAddress[1]);
+		
 		try {
 
 			SSLSocket socket = startClient(ip,port);

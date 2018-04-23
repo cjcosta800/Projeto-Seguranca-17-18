@@ -4,7 +4,6 @@ import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -12,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 public class PhotoShareServer {
 
 
-	final static String password = "654321";
+	final static String password = "grupo026";
 
 	public static void main(String[] args) throws IOException {
 
