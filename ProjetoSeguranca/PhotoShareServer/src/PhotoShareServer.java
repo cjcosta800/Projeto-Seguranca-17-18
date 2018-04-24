@@ -14,6 +14,9 @@ public class PhotoShareServer {
 	final static String password = "grupo026";
 
 	public static void main(String[] args) throws IOException {
+		
+		System.setProperty("javax.net.ssl.keyStore",ServerPaths.SSLKEYSTORE_FILE);
+		System.setProperty("javax.net.ssl.keyStorePassword", password);
 
 		/* Check number of args. Must be 1 */
 		if (args.length != 1) {
@@ -32,8 +35,7 @@ public class PhotoShareServer {
 
 		System.out.println("Listening for new connections at " + args[0] + "...");
 
-		System.setProperty("javax.net.ssl.keyStore",ServerPaths.SSLKEYSTORE_FILE);
-		System.setProperty("javax.net.ssl.keyStorePassword", password);
+		
 
 		PhotoShareServer photoShareServer = new PhotoShareServer();
 		photoShareServer.startServer(socket);

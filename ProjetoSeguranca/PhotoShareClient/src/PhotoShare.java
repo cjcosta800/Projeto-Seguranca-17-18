@@ -16,6 +16,9 @@ public class PhotoShare {
 	public static void main(String[] args) throws SSLException, SSLKeyException {
 
 
+		System.setProperty("javax.net.ssl.trustStore",ClientPaths.SSLTRUSTSTORE_FILE);
+
+		
 		if(args.length < 3) {
 			System.err.print("Client must be run with the following command: 'PhotoShare <localUserId> <password>" +
 					" <serverAddress>'. Can also have the following options:\n");
@@ -26,8 +29,7 @@ public class PhotoShare {
 			System.exit(0);
 		}
 
-		System.setProperty("javax.net.ssl.trustStore",ClientPaths.SSLTRUSTSTORE_FILE);
-
+		
 
 
 		String currUser = args[0];
