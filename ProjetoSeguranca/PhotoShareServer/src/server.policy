@@ -4,12 +4,12 @@ grant codeBase "file:out/" {
     permission java.net.SocketPermission "*:1024-", "accept";
     permission java.net.SocketPermission "*:1024-", "resolve";
 
-    permission java.io.FilePermission "PhotoShare/", "write";
-    permission java.io.FilePermission "PhotoShare/", "read";
+    permission java.io.FilePermission "PhotoShareServer/", "write";
+    permission java.io.FilePermission "PhotoShareServer/", "read";
 
-    permission java.io.FilePermission "PhotoShare/-", "write";
-    permission java.io.FilePermission "PhotoShare/-", "read";
-    permission java.io.FilePermission "PhotoShare/-", "delete";
+    permission java.io.FilePermission "PhotoShareServer/-", "write";
+    permission java.io.FilePermission "PhotoShareServer/-", "read";
+    permission java.io.FilePermission "PhotoShareServer/-", "delete";
 
     permission java.util.PropertyPermission "javax.net.ssl.keyStore", "write";
     permission java.util.PropertyPermission "javax.net.ssl.keyStorePassword", "write";
