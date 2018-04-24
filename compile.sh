@@ -1,10 +1,10 @@
 #!/bin/bash
 
-SERVER_OUT_PATH='PhotoShareServer/out'
-SERVER_IN_PATH='PhotoShareServer/src'
+SERVER_OUT_PATH='ProjetoSeguranca/PhotoShareServer/out'
+SERVER_IN_PATH='ProjetoSeguranca/PhotoShareServer/src'
 
-CLIENT_OUT_PATH='PhotoShareClient/out'
-CLIENT_IN_PATH='PhotoShareClient/src'
+CLIENT_OUT_PATH='ProjetoSeguranca/PhotoShareClient/out'
+CLIENT_IN_PATH='ProjetoSeguranca/PhotoShareClient/src'
 
 ########################################################
 ####      CHECK IF SERVER AND CLIENT OUT EXISTS     ####
