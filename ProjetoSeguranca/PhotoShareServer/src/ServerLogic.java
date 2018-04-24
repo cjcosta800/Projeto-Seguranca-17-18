@@ -201,16 +201,16 @@ public class ServerLogic {
 
 		int counter = 0;
 
-		while( counter < numUsers ) {
-			String userToFollowUnfollow = (String) inputStream.readObject();
+        while (counter < numUsers) {
+            String userToFollowUnfollow = (String) inputStream.readObject();
 
-			if (option == 0)
-				followUser(userToFollowUnfollow);
-			if (option == 1)
-				unfollowUser(userToFollowUnfollow);
+            if (option == 0)
+                followUser(userToFollowUnfollow);
+            if (option == 1)
+                unfollowUser(userToFollowUnfollow);
 
-			counter++;
-		}
+            counter++;
+        }
 
 	}
 
@@ -469,35 +469,75 @@ public class ServerLogic {
 
 		try {
 
-			if (userToFollow.equals(user)) {
-				outputStream.writeObject(3); // o user nao se pode seguir
-				return;
-			}
+		    if(new File(userPath + ServerPaths.FILE_SEPARATOR + "followers.txt").length() == 0) {
 
-			File followers = new File(followersPath);
-			BufferedWriter fwriter = new BufferedWriter(new FileWriter(followers,true));
-			String line;
+		        if(userToFollow.equals(user)) {
+		            outputStream.writeObject(3);
+		            return;
+                }
 
-			if (isUser(userToFollow)) {
-				if(!userIsFollowedBy(userToFollow, followers)) {
-					fwriter.write(userToFollow + "\n");
-					outputStream.writeObject(new Integer(0));
-				} else {
-					outputStream.writeObject(new Integer(2)); // user ja e seguido
-				}
-			} else {
-				outputStream.writeObject(new Integer(1)); // user nao existe
-			}
+                String toCipher = userToFollow + "\n";
+		        // criar assinatura e guarda-la
+		        byte[] signature = security.signFile(toCipher.getBytes(), "followers.txt");
+		        security.saveSign(signature, "followers.txt");
+		        // cifrar o conteudo
+                security.generateAESKey("followers.txt");
+		        byte[] ciphered = security.cipher(toCipher.getBytes(), "followers.txt");
+                // guardar o conteudo cifrado
+		        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
+		        oos.writeObject(ciphered);
+		        oos.flush();
+		        oos.close();
 
-			fwriter.flush();
-			fwriter.close();
+            }else {
+
+                if (userToFollow.equals(user)) {
+                    outputStream.writeObject(3); // o user nao se pode seguir
+                    return;
+                }
+
+                File followers = new File(followersPath);
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
+                byte[] fileByted = (byte[]) ois.readObject();
+                String followersString = new String
+                        (security.decipher(fileByted, "followers.txt"));
+
+                if(security.verifySignature("followers.txt", followersString.getBytes())) {
+
+                    String followersByLines[] = followersString.split("\n");
+                    if(isUser(userToFollow)) {
+                        if(!userIsFollowedBy(userToFollow, followersByLines)) {
+                            followersString = followersString + userToFollow + "\n";
+                            outputStream.writeObject(new Integer(0));
+                        } else {
+                            outputStream.writeObject(new Integer(2)); // user ja e seguido
+                        }
+                    } else {
+                        outputStream.writeObject(new Integer(1)); // user nao existe
+                    }
+                    byte[] newSignature = security.signFile(followersString.getBytes(), "followers.txt");
+                    security.saveSign(newSignature, "followers.txt");
+
+                    byte[] cipheredFile = security.cipher(followersString.getBytes(), "followers.txt");
+                    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
+                    oos.writeObject(cipheredFile);
+
+                    oos.flush();
+                    oos.close();
+                } else {
+                    outputStream.writeObject(1);
+                    throw new SecurityException(user + "'s followers file was violated!");
+                }
+            }
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		}
-	}
+		} catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Check if local user follows otherUser
@@ -506,19 +546,20 @@ public class ServerLogic {
 	 * @return true if otherUser is already followed
 	 * @throws IOException
 	 */
-	private boolean userIsFollowedBy(String otherUser, File followers) throws IOException {
-
-		BufferedReader freader = new BufferedReader(new FileReader(followers));
-		String line = freader.readLine();
+	private boolean userIsFollowedBy(String otherUser, String[] followers){
 
 		boolean userFound = false;
+        String line;
+        int count = 0;
 
-		while (line != null && !userFound) {
-			if (otherUser.equals(line)) {
-				userFound = true;
-			}
+		while (count < followers.length && !userFound) {
+            line = followers[count];
 
-			line = freader.readLine();
+            if (otherUser.equals(line)) {
+                userFound = true;
+            }
+
+			count++;
 		}
 
 		return userFound;
@@ -536,44 +577,62 @@ public class ServerLogic {
 		try {
 			File followers = new File(followersPath);
 
+			if(followers.length() == 0) {
+                outputStream.writeObject(1);
+                return;
+			}
+
 			if (userToUnfollow.equals(this.user)) {
 				outputStream.writeObject(3); // nao se pode fazer unfollow a si mesmo
+                return;
 			}
 
-			if(userIsFollowedBy(userToUnfollow, followers)) {
-				File tmp = new File(followersPath + ".tmp");
-				BufferedReader readFollowers = new BufferedReader(new FileReader(followers));
-				BufferedWriter writeTmp = new BufferedWriter(new FileWriter(tmp));
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
+            byte[] fileByted = (byte[]) ois.readObject();
+            String followersString = new String
+                    (security.decipher(fileByted, "followers.txt"));
+            String[] followersSplitted = followersString.split("\n");
 
-				String line = readFollowers.readLine();
+            if(security.verifySignature("followers.txt", followersString.getBytes())) {
+                if(userIsFollowedBy(userToUnfollow, followersSplitted)) {
+                    int count = 0;
+                    StringBuilder sb = new StringBuilder();
 
-				while (line != null) {
+                    while(count < followersSplitted.length) {
+                        if(!followersSplitted[count].equals(userToUnfollow)){
+                            sb.append(followersSplitted[count]).append("\n");
+                        }
+                        count++;
+                    }
 
-					System.out.println(line);
+                    String newFollowersFile = sb.toString();
+                    byte[] newsignature = security.signFile(newFollowersFile.getBytes(), "followers.txt");
+                    security.saveSign(newsignature, "followers.txt");
 
-					if(!line.equals(userToUnfollow))
-						writeTmp.write(line + "\n");
+                    byte[] cipheredFollowers = security.cipher(newFollowersFile.getBytes(), "followers.txt");
+                    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followers));
+                    oos.writeObject(cipheredFollowers);
+                    oos.flush();
+                    oos.close();
 
-					line = readFollowers.readLine();
-				}
+                    outputStream.writeObject(0);
 
-				readFollowers.close();
-				writeTmp.close();
-				followers.delete();
-				tmp.renameTo(followers);
-
-				outputStream.writeObject(new Integer(0)); // correu tudo bem
-
-			} else {
-				outputStream.writeObject(new Integer(1)); // user nao era follower
-			}
+                } else {
+                    outputStream.writeObject(1); // user nao era follower
+                }
+            } else {
+                outputStream.writeObject(1);
+                throw new SecurityException(user + "'s followers file was violated!");
+            }
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		}
-	}
+		} catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Adds a new user to the passwords file
@@ -585,7 +644,8 @@ public class ServerLogic {
 	private boolean registerUser(String user, String password) throws IOException {
 
 		this.userPath = ServerPaths.SERVER_PATH + user;
-		File file = new File(userPath + "/followers.txt");
+		String followersPath = userPath + ServerPaths.FILE_SEPARATOR + "followers.txt";
+		File file = new File(followersPath);
 
 		file.getParentFile().mkdirs();
 		file.createNewFile();
@@ -767,8 +827,8 @@ public class ServerLogic {
 
 		if(canProceed) {
 			outputStream.writeObject(new Integer(file.length));
-            outputStream.writeObject(file);
-//			outputStream.write(file,0, file.length);
+            //outputStream.writeObject(file);
+			outputStream.write(file,0, file.length);
 			outputStream.flush();
 		}
 	}
@@ -783,8 +843,9 @@ public class ServerLogic {
 	    String photoPath = userIdPath + ServerPaths.FILE_SEPARATOR + photoName;
 
 		try {
-			FileInputStream fis = new FileInputStream(photoPath);
-			byte[] cipheredFile = new byte[fis.available()];
+		    File photo = new File(photoPath);
+			FileInputStream fis = new FileInputStream(photo);
+			byte[] cipheredFile = new byte[(int) photo.length()];
 			fis.read(cipheredFile);
 			fis.close();
 

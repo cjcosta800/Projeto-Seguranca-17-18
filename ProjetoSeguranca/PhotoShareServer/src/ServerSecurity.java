@@ -181,5 +181,122 @@ public class ServerSecurity {
         return null;
     }
 
+    /**
+     *
+     * @param filename
+     */
+    public byte[] signFile(byte[] toSign, String filename) {
+        try {
+            PrivateKey privateServerKey = (PrivateKey) kstore.getKey(SERVER_CERTIFICATE_ALIAS, "grupo026".toCharArray());
+            Signature sign = Signature.getInstance("SHA1withRSA");
+            sign.initSign(privateServerKey);
+
+            String filePath = ServerPaths.SERVER_PATH + currentUser +
+                    ServerPaths.FILE_SEPARATOR + filename;
+
+            sign.update(toSign);
+
+            return sign.sign();
+
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * @param signature
+     */
+    public void saveSign(byte[] signature, String filename) {
+        String filePath = ServerPaths.SERVER_PATH + currentUser +
+                ServerPaths.FILE_SEPARATOR + filename + ".sig";
+
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(filePath));
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(signature);
+            oos.flush();
+            oos.close();
+            fos.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *
+     * @param filename
+     * @return
+     */
+    public byte[] loadSign(String filename) {
+        String filePath = ServerPaths.SERVER_PATH + currentUser +
+                ServerPaths.FILE_SEPARATOR + filename + ".sig";
+
+        try {
+            FileInputStream fis = new FileInputStream(new File (filePath));
+            ObjectInputStream ois = new ObjectInputStream(fis);
+
+            byte[] result = (byte[]) ois.readObject();
+            ois.close();
+            fis.close();
+
+            return result;
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * @param filename
+     * @param data
+     * @return
+     */
+    public boolean verifySignature(String filename, byte[] data) {
+        try {
+            Certificate cert = kstore.getCertificate(SERVER_CERTIFICATE_ALIAS);
+            PublicKey publicKey = cert.getPublicKey();
+
+            Signature sign = Signature.getInstance("SHA1withRSA");
+            sign.initVerify(publicKey);
+
+            byte[] signature = loadSign(filename);
+            sign.update(data);
+
+            return sign.verify(signature);
+
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 
 }
