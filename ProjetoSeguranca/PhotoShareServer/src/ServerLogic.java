@@ -157,11 +157,11 @@ public class ServerLogic {
 			// reads all bytes from stream to an array
 			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1);
 			// cipher array
-            byte[] photocipher = security.cipher(buffer, photoName);
-            // writes ciphered photo to photo file
-            fos.write(photocipher);
-            fos.flush();
-            fos.close();
+                        byte[] photocipher = security.cipher(buffer, photoName);
+                        // writes ciphered photo to photo file
+                        fos.write(photocipher);
+                        fos.flush();
+                        fos.close();
 
 			// writes new meta file
 			createPhotoMetaFile(photoName);
@@ -233,8 +233,8 @@ public class ServerLogic {
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-        FileOutputStream fos = new FileOutputStream(photometapath);
-        StringBuilder sb = new StringBuilder();
+                FileOutputStream fos = new FileOutputStream(photometapath);
+        	StringBuilder sb = new StringBuilder();
 
 		// writes date as: 04 July 2001 12:08:56
 		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");

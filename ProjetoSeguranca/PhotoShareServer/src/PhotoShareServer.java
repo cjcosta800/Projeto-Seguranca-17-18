@@ -1,10 +1,11 @@
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -13,7 +14,13 @@ import java.security.cert.CertificateException;
 
 public class PhotoShareServer {
 
-	public static void main(String[] args) {
+
+	final static String password = "grupo026";
+
+	public static void main(String[] args) throws IOException {
+		
+		System.setProperty("javax.net.ssl.keyStore",ServerPaths.SSLKEYSTORE_FILE);
+		System.setProperty("javax.net.ssl.keyStorePassword", password);
 
 		/* Check number of args. Must be 1 */
 		if (args.length != 1) {
@@ -38,12 +45,13 @@ public class PhotoShareServer {
 
 	public void startServer(int socket) {
 
-		ServerSocket sSoc = null;
+		SSLServerSocketFactory sslfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+		SSLServerSocket ssl = null;
 
 		try {
-			sSoc = new ServerSocket(socket);
+			ssl = (SSLServerSocket) sslfact.createServerSocket(socket);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -51,7 +59,7 @@ public class PhotoShareServer {
 		while(true) {
 			Socket inSoc = null;
 			try {
-				inSoc = sSoc.accept();
+				inSoc = ssl.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
 			} catch (IOException e) {

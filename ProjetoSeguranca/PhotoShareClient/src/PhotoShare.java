@@ -1,16 +1,24 @@
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLKeyException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class PhotoShare {
 
-	public static void main(String[] args) {
+	final static String password = "654321";
+
+	public static void main(String[] args) throws SSLException, SSLKeyException {
 
 
+		System.setProperty("javax.net.ssl.trustStore",ClientPaths.SSLTRUSTSTORE_FILE);
+
+		
 		if(args.length < 3) {
 			System.err.print("Client must be run with the following command: 'PhotoShare <localUserId> <password>" +
 					" <serverAddress>'. Can also have the following options:\n");
@@ -21,15 +29,18 @@ public class PhotoShare {
 			System.exit(0);
 		}
 
+		
+
 
 		String currUser = args[0];
 		String password = args[1];
 		String[] serverAddress = args[2].split(":");
 		String ip = serverAddress[0];
 		int port = Integer.parseInt(serverAddress[1]);
+		
 		try {
 
-			Socket socket = startClient(ip,port);
+			SSLSocket socket = startClient(ip,port);
 
 			ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 			ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -125,16 +136,17 @@ public class PhotoShare {
 	}
 
 
-	public static Socket startClient(String ip, int port) throws IOException {
+	public static SSLSocket startClient(String ip, int port) throws IOException {
 
-		Socket socket = null;
+		SSLSocketFactory sslfact = (SSLSocketFactory) SSLSocketFactory.getDefault();
+		SSLSocket ssl = null;
 
-		socket = new Socket(ip, port);
+		ssl = (SSLSocket) sslfact.createSocket(ip, port);
 
-		if(socket.isConnected())
+		if(ssl.isConnected())
 		    System.out.println("Connected.");
 
-		return socket;
+		return ssl;
 	}
 
 
