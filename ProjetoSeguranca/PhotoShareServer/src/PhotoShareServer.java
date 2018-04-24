@@ -1,3 +1,5 @@
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -6,7 +8,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 
 public class PhotoShareServer {
 
@@ -32,11 +36,7 @@ public class PhotoShareServer {
 			System.exit(0);
 		}
 
-
 		System.out.println("Listening for new connections at " + args[0] + "...");
-
-		
-
 		PhotoShareServer photoShareServer = new PhotoShareServer();
 		photoShareServer.startServer(socket);
 
@@ -206,6 +206,14 @@ public class PhotoShareServer {
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
 			} catch (InvalidKeyException e) {
+				e.printStackTrace();
+			} catch (BadPaddingException e) {
+				e.printStackTrace();
+			} catch (IllegalBlockSizeException e) {
+				e.printStackTrace();
+			} catch (CertificateException e) {
+				e.printStackTrace();
+			} catch (KeyStoreException e) {
 				e.printStackTrace();
 			}
 

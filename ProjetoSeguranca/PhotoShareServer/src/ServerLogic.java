@@ -1,9 +1,9 @@
-import javax.crypto.Cipher;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import java.io.*;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,8 +16,9 @@ public class ServerLogic {
 	private String userPath;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
+	private ServerSecurity security;
 
-    public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream) {
+	public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream) {
 
 		File serPath = new File(ServerPaths.SERVER_PATH);
 		if(!serPath.isDirectory()) {
@@ -55,7 +56,8 @@ public class ServerLogic {
 	 * false if incorrect password
 	 * @throws IOException
 	 */
-	public boolean getAuthenticated(String user, String password) throws IOException {
+	public boolean getAuthenticated(String user, String password) throws IOException, NoSuchAlgorithmException,
+			CertificateException, KeyStoreException {
 
 		this.userPwd = loadPasswords();
 
@@ -64,6 +66,7 @@ public class ServerLogic {
 			if (userPwd.get(user).equals(password)) {
 				this.user = user;
 				this.userPath = ServerPaths.SERVER_PATH + user;
+				this.security = new ServerSecurity(user);
 				return true;
 			} else
 				return false;
@@ -125,7 +128,9 @@ public class ServerLogic {
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	public void receivePhoto() throws IOException, ClassNotFoundException {
+	public void receivePhoto() throws IOException, ClassNotFoundException,
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException {
 
 		// recebe "pergunta" se o cliente pode comecar a enviar. Particularmente importante para o caso de varias fotos
 		String photoName = (String) inputStream.readObject();
@@ -142,23 +147,24 @@ public class ServerLogic {
 			outputStream.writeObject(new Boolean(false));
 			// recebe tamanho da foto
 			int photoSize = inputStream.readInt();
+			// generate AES key
+            security.generateAESKey(photoName);
 
 			newPhoto.createNewFile();
 			byte[] buffer = new byte[photoSize];
-
 			FileOutputStream fos = new FileOutputStream(newPhoto);
-			BufferedOutputStream writefile = new BufferedOutputStream(fos);
 			int byteread = 0;
+			// reads all bytes from stream to an array
+			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1);
+			// cipher array
+                        byte[] photocipher = security.cipher(buffer, photoName);
+                        // writes ciphered photo to photo file
+                        fos.write(photocipher);
+                        fos.flush();
+                        fos.close();
 
-			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
-				writefile.write(buffer, 0, byteread);
-			}
 			// writes new meta file
 			createPhotoMetaFile(photoName);
-
-			writefile.flush();
-			writefile.close();
-			fos.close();
 
 		} else {
 			// caso a foto ja esteja presente no servidor... envia-se uma mensagem de erro, neste caso bool false
@@ -173,7 +179,8 @@ public class ServerLogic {
 	 * @param numPhotos
 	 */
 	public void receivePhotos(int numPhotos) throws IOException, ClassNotFoundException,
-            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+            NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException,
+            BadPaddingException, IllegalBlockSizeException, KeyStoreException {
 
 		for (int i = 0; i < numPhotos; i++) {
 
@@ -194,16 +201,16 @@ public class ServerLogic {
 
 		int counter = 0;
 
-		while( counter < numUsers ) {
-			String userToFollowUnfollow = (String) inputStream.readObject();
+        while (counter < numUsers) {
+            String userToFollowUnfollow = (String) inputStream.readObject();
 
-			if (option == 0)
-				followUser(userToFollowUnfollow);
-			if (option == 1)
-				unfollowUser(userToFollowUnfollow);
+            if (option == 0)
+                followUser(userToFollowUnfollow);
+            if (option == 1)
+                unfollowUser(userToFollowUnfollow);
 
-			counter++;
-		}
+            counter++;
+        }
 
 	}
 
@@ -211,34 +218,38 @@ public class ServerLogic {
 	 * Creates "metafile" for the photo
 	 *
 	 * @param photoName
-	 * @param cipher
      * @throws IOException
 	 */
-	private void createPhotoMetaFile(String photoName) throws IOException {
+	private void createPhotoMetaFile(String photoName) throws IOException,
+            IllegalBlockSizeException, InvalidKeyException, NoSuchPaddingException,
+            NoSuchAlgorithmException, BadPaddingException {
 
 		/* Line 1: Current date
 		 * Line 2: Likes:Dislikes
 		 * Line 3: Comment
 		 * Line 4: Comment ...
 		 */
-		String photometapath = userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
+		String photometapath = this.userPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 		File photometa = new File(photometapath);
 		photometa.createNewFile();
 
-		BufferedWriter fwriter = new BufferedWriter(new FileWriter(photometapath));
+                FileOutputStream fos = new FileOutputStream(photometapath);
+        	StringBuilder sb = new StringBuilder();
 
 		// writes date as: 04 July 2001 12:08:56
 		SimpleDateFormat sdfDate = new SimpleDateFormat("EEEE, dd 'de' MMMMM 'de' yyyy 'as' HH:mm:ss");
 		Date now = new Date();
-		String date = sdfDate.format(now);
-
-		// write current date
-		fwriter.write(date + "\n");
-		// write likes and dislikes (both starting at 0)
-		fwriter.write("0:0\n");
-		// close writer
-		fwriter.flush();
-		fwriter.close();
+		// saves current date
+		sb.append(sdfDate.format(now)).append("\n");
+		// writes likes and dislikes (both starting at 0)
+		sb.append("0:0\n");
+		String result = sb.toString();
+		// ciphers text
+		byte[] cipherText = security.cipher(result.getBytes(), photoName);
+		// writes ciphered text to a file
+		fos.write(cipherText);
+		fos.flush();
+		fos.close();
 	}
 
 	/**
@@ -253,7 +264,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				outputStream.writeObject(new Integer(isFollower));
 
-				String photoList = getPhotoList(ServerPaths.SERVER_PATH + userId);
+				String photoList = getPhotoList(ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR);
 
 				outputStream.writeObject(photoList);
 			} else {
@@ -285,16 +296,25 @@ public class ServerLogic {
 
 				if (photoMetaPath != null) {
 
-					BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoMetaPath, true));
-
+					FileInputStream fis = new FileInputStream(photoMetaPath);
+					byte[] cipheredfile = new byte[fis.available()];
+					fis.read(cipheredfile);
+					fis.close();
+					byte[] originalText = security.decipher(cipheredfile, photoName);
+					StringBuilder sb = new StringBuilder(new String(originalText));
 					// writes date as: 04/07/2001
 					SimpleDateFormat sdfDate = new SimpleDateFormat("dd/MM/yy");
 					Date now = new Date();
 					String date = sdfDate.format(now);
 
-					fwriter.write("[" + date + "] " + this.user + ": " + comment + "\n");
-					fwriter.flush();
-					fwriter.close();
+					sb.append("[" + date + "] " + this.user + ": " + comment + "\n");
+
+					byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+
+					FileOutputStream fos = new FileOutputStream(photoMetaPath);
+					fos.write(ciphered);
+					fos.flush();
+					fos.close();
 
 					outputStream.writeObject(new Integer(isFollower));
 
@@ -360,7 +380,7 @@ public class ServerLogic {
 			if (isFollower == 0) {
 				String photoMetaPath = getPhotoMetaPath(userId, photoName);
 				if(photoMetaPath != null) {
-					String comments = getComments(photoMetaPath);
+					String comments = getComments(photoName);
 					outputStream.writeObject(new Integer(0));
 
 					outputStream.writeObject(new String(comments));
@@ -397,30 +417,34 @@ public class ServerLogic {
 
                 if (photometapath != null) {
 
-                    File metaData = new File(photometapath);
-                    File aux = new File(userPath + ".tmp");
-                    BufferedReader buffReader = new BufferedReader(new FileReader(metaData));
-                    BufferedWriter fwriter = new BufferedWriter(new FileWriter(aux));
+					FileInputStream fis = new FileInputStream(photometapath);
+					byte[] cipheredfile = new byte[fis.available()];
+					fis.read(cipheredfile);
+					fis.close();
+					String originalText = new String(security.decipher(cipheredfile, photoName));
+					String[] lines = originalText.split("\n");
+					StringBuilder sb = new StringBuilder();
 
-                    String photoDetails = buffReader.readLine();
-                    fwriter.write(photoDetails + "\n");
+					// first line contains upload date
+					sb.append(lines[0]).append("\n");
 
-                    String likesDislikes = buffReader.readLine();
-                    String[] counters = likesDislikes.split(":");
-                    int data = Integer.parseInt(counters[posToChange]) + 1;
-                    counters[posToChange] = Integer.toString(data);
-                    fwriter.write(counters[0] + ":" + counters[1] + "\n");
+					String likesDislikes = lines[1];
+					String[] counters = likesDislikes.split(":");
+					int valueIncreased = Integer.parseInt(counters[posToChange]) + 1;
+					counters[posToChange] = Integer.toString(valueIncreased);
+					sb.append(counters[0]).append(":").append(counters[1]).append("\n");
 
-                    String line = buffReader.readLine();
-                    while (line  != null) {
-                        fwriter.write(line + "\n");
-                        line = buffReader.readLine();
-                    }
+					int count = 2;
+					while(count < lines.length) {
+						sb.append(lines[count]).append("\n");
+						count++;
+					}
 
-                    fwriter.close();
-                    buffReader.close();
-                    metaData.delete();
-                    aux.renameTo(metaData);
+                    byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+                    FileOutputStream fos = new FileOutputStream(photometapath);
+                    fos.write(ciphered);
+                    fos.flush();
+                    fos.close();
 
                     outputStream.writeObject(new Integer(0)); //SUCESSO
                 } else
@@ -445,35 +469,75 @@ public class ServerLogic {
 
 		try {
 
-			if (userToFollow.equals(user)) {
-				outputStream.writeObject(3); // o user nao se pode seguir
-				return;
-			}
+		    if(new File(userPath + ServerPaths.FILE_SEPARATOR + "followers.txt").length() == 0) {
 
-			File followers = new File(followersPath);
-			BufferedWriter fwriter = new BufferedWriter(new FileWriter(followers,true));
-			String line;
+		        if(userToFollow.equals(user)) {
+		            outputStream.writeObject(3);
+		            return;
+                }
 
-			if (isUser(userToFollow)) {
-				if(!userIsFollowedBy(userToFollow, followers)) {
-					fwriter.write(userToFollow + "\n");
-					outputStream.writeObject(new Integer(0));
-				} else {
-					outputStream.writeObject(new Integer(2)); // user ja e seguido
-				}
-			} else {
-				outputStream.writeObject(new Integer(1)); // user nao existe
-			}
+                String toCipher = userToFollow + "\n";
+		        // criar assinatura e guarda-la
+		        byte[] signature = security.signFile(toCipher.getBytes(), "followers.txt");
+		        security.saveSign(signature, "followers.txt");
+		        // cifrar o conteudo
+                security.generateAESKey("followers.txt");
+		        byte[] ciphered = security.cipher(toCipher.getBytes(), "followers.txt");
+                // guardar o conteudo cifrado
+		        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
+		        oos.writeObject(ciphered);
+		        oos.flush();
+		        oos.close();
 
-			fwriter.flush();
-			fwriter.close();
+            }else {
+
+                if (userToFollow.equals(user)) {
+                    outputStream.writeObject(3); // o user nao se pode seguir
+                    return;
+                }
+
+                File followers = new File(followersPath);
+                ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
+                byte[] fileByted = (byte[]) ois.readObject();
+                String followersString = new String
+                        (security.decipher(fileByted, "followers.txt"));
+
+                if(security.verifySignature("followers.txt", followersString.getBytes())) {
+
+                    String followersByLines[] = followersString.split("\n");
+                    if(isUser(userToFollow)) {
+                        if(!userIsFollowedBy(userToFollow, followersByLines)) {
+                            followersString = followersString + userToFollow + "\n";
+                            outputStream.writeObject(new Integer(0));
+                        } else {
+                            outputStream.writeObject(new Integer(2)); // user ja e seguido
+                        }
+                    } else {
+                        outputStream.writeObject(new Integer(1)); // user nao existe
+                    }
+                    byte[] newSignature = security.signFile(followersString.getBytes(), "followers.txt");
+                    security.saveSign(newSignature, "followers.txt");
+
+                    byte[] cipheredFile = security.cipher(followersString.getBytes(), "followers.txt");
+                    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
+                    oos.writeObject(cipheredFile);
+
+                    oos.flush();
+                    oos.close();
+                } else {
+                    outputStream.writeObject(1);
+                    throw new SecurityException(user + "'s followers file was violated!");
+                }
+            }
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		}
-	}
+		} catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Check if local user follows otherUser
@@ -482,19 +546,20 @@ public class ServerLogic {
 	 * @return true if otherUser is already followed
 	 * @throws IOException
 	 */
-	private boolean userIsFollowedBy(String otherUser, File followers) throws IOException {
-
-		BufferedReader freader = new BufferedReader(new FileReader(followers));
-		String line = freader.readLine();
+	private boolean userIsFollowedBy(String otherUser, String[] followers){
 
 		boolean userFound = false;
+        String line;
+        int count = 0;
 
-		while (line != null && !userFound) {
-			if (otherUser.equals(line)) {
-				userFound = true;
-			}
+		while (count < followers.length && !userFound) {
+            line = followers[count];
 
-			line = freader.readLine();
+            if (otherUser.equals(line)) {
+                userFound = true;
+            }
+
+			count++;
 		}
 
 		return userFound;
@@ -512,44 +577,62 @@ public class ServerLogic {
 		try {
 			File followers = new File(followersPath);
 
+			if(followers.length() == 0) {
+                outputStream.writeObject(1);
+                return;
+			}
+
 			if (userToUnfollow.equals(this.user)) {
 				outputStream.writeObject(3); // nao se pode fazer unfollow a si mesmo
+                return;
 			}
 
-			if(userIsFollowedBy(userToUnfollow, followers)) {
-				File tmp = new File(followersPath + ".tmp");
-				BufferedReader readFollowers = new BufferedReader(new FileReader(followers));
-				BufferedWriter writeTmp = new BufferedWriter(new FileWriter(tmp));
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
+            byte[] fileByted = (byte[]) ois.readObject();
+            String followersString = new String
+                    (security.decipher(fileByted, "followers.txt"));
+            String[] followersSplitted = followersString.split("\n");
 
-				String line = readFollowers.readLine();
+            if(security.verifySignature("followers.txt", followersString.getBytes())) {
+                if(userIsFollowedBy(userToUnfollow, followersSplitted)) {
+                    int count = 0;
+                    StringBuilder sb = new StringBuilder();
 
-				while (line != null) {
+                    while(count < followersSplitted.length) {
+                        if(!followersSplitted[count].equals(userToUnfollow)){
+                            sb.append(followersSplitted[count]).append("\n");
+                        }
+                        count++;
+                    }
 
-					System.out.println(line);
+                    String newFollowersFile = sb.toString();
+                    byte[] newsignature = security.signFile(newFollowersFile.getBytes(), "followers.txt");
+                    security.saveSign(newsignature, "followers.txt");
 
-					if(!line.equals(userToUnfollow))
-						writeTmp.write(line + "\n");
+                    byte[] cipheredFollowers = security.cipher(newFollowersFile.getBytes(), "followers.txt");
+                    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followers));
+                    oos.writeObject(cipheredFollowers);
+                    oos.flush();
+                    oos.close();
 
-					line = readFollowers.readLine();
-				}
+                    outputStream.writeObject(0);
 
-				readFollowers.close();
-				writeTmp.close();
-				followers.delete();
-				tmp.renameTo(followers);
-
-				outputStream.writeObject(new Integer(0)); // correu tudo bem
-
-			} else {
-				outputStream.writeObject(new Integer(1)); // user nao era follower
-			}
+                } else {
+                    outputStream.writeObject(1); // user nao era follower
+                }
+            } else {
+                outputStream.writeObject(1);
+                throw new SecurityException(user + "'s followers file was violated!");
+            }
 
 		} catch (FileNotFoundException ex) {
 			ex.printStackTrace();
 		} catch (IOException ex) {
 			ex.printStackTrace();
-		}
-	}
+		} catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Adds a new user to the passwords file
@@ -561,7 +644,8 @@ public class ServerLogic {
 	private boolean registerUser(String user, String password) throws IOException {
 
 		this.userPath = ServerPaths.SERVER_PATH + user;
-		File file = new File(userPath + "/followers.txt");
+		String followersPath = userPath + ServerPaths.FILE_SEPARATOR + "followers.txt";
+		File file = new File(followersPath);
 
 		file.getParentFile().mkdirs();
 		file.createNewFile();
@@ -620,7 +704,7 @@ public class ServerLogic {
 		ArrayList<String> photoNames = getPhotosList(userIdPath);
 
 		for (String photo : photoNames) {
-			sb.append(photo + " was uploaded at " + uploadDate(photo + ".txt", userIdPath) +"\n");
+			sb.append(photo + " was uploaded at ").append(uploadDate(photo, userIdPath) +"\n");
 
 		}
 
@@ -629,18 +713,20 @@ public class ServerLogic {
 
 	/**
 	 * Returns the upload date of a photo
-	 * @param photometafile
+	 * @param photoName
 	 * @param userIdPath
 	 * @return upload date of a photo
 	 */
-	private String uploadDate(String photometafile, String userIdPath) {
+	private String uploadDate(String photoName, String userIdPath) {
 		try {
-			BufferedReader freader = new BufferedReader(new FileReader(userIdPath + ServerPaths.FILE_SEPARATOR + photometafile));
+			FileInputStream fis = new FileInputStream(userIdPath + photoName + ".txt");
+			byte[] ciphered = new byte[fis.available()];
+            fis.read(ciphered);
+            fis.close();
 
-			String result = freader.readLine();
-			freader.close();
-
-			return result;
+			byte[] original = security.decipher(ciphered, photoName);
+            // return date (line 1)
+			return new String(original).split("\n")[0];
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -648,7 +734,7 @@ public class ServerLogic {
 			e.printStackTrace();
 		}
 
-		return null;
+        return null;
 	}
 
 	/**
@@ -729,30 +815,22 @@ public class ServerLogic {
 	/**
 	 * Sends a file to client
 	 * @param file file to be sent to client
+     * @param filename name of the file to be sent to the client
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private void sendFile(File file) throws IOException, ClassNotFoundException {
-		FileInputStream fileOut = new FileInputStream(file);
-		BufferedInputStream readFileBytes = new BufferedInputStream(fileOut);
+	private void sendFile(byte[] file, String filename) throws IOException, ClassNotFoundException {
 
-		outputStream.writeObject(new String(file.getName()));
+		outputStream.writeObject(new String(filename));
 
 		Boolean canProceed = (Boolean) inputStream.readObject();
 
 		if(canProceed) {
-			outputStream.writeObject(new Integer((int)file.length()));
-
-			byte buffer[] = new byte[(int) file.length()];
-
-			readFileBytes.read(buffer, 0, buffer.length);
-
-			outputStream.write(buffer,0, buffer.length);
+			outputStream.writeObject(new Integer(file.length));
+            //outputStream.writeObject(file);
+			outputStream.write(file,0, file.length);
 			outputStream.flush();
 		}
-
-		readFileBytes.close();
-		fileOut.close();
 	}
 
 	/**
@@ -761,9 +839,19 @@ public class ServerLogic {
 	 * @param userIdPath
 	 */
 	private void sendPhoto(String photoName, String userIdPath) {
+
+	    String photoPath = userIdPath + ServerPaths.FILE_SEPARATOR + photoName;
+
 		try {
-			File photo = new File(userIdPath + ServerPaths.FILE_SEPARATOR + photoName);
-			sendFile(photo);
+		    File photo = new File(photoPath);
+			FileInputStream fis = new FileInputStream(photo);
+			byte[] cipheredFile = new byte[(int) photo.length()];
+			fis.read(cipheredFile);
+			fis.close();
+
+			byte[] originalPhoto = security.decipher(cipheredFile, photoName);
+
+            sendFile(originalPhoto, photoName);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -776,29 +864,24 @@ public class ServerLogic {
 
 	/**
 	 * Sends photo comments (and likes/dislikes) to client
-	 * @param photo
+	 * @param photoName
 	 * @param userIdPath
 	 */
-	private void sendComments(String photo, String userIdPath) {
+	private void sendComments(String photoName, String userIdPath) {
 
-		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photo + ".txt";
+		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 		//photo-comments.txt
-		String photoCommentsTmp = userIdPath + ServerPaths.FILE_SEPARATOR + photo + "-comments.txt";
+		String photoComments = photoName + "-comments.txt";
 
 		try {
-			BufferedWriter fwriter = new BufferedWriter(new FileWriter(photoCommentsTmp));
+		    FileInputStream fis = new FileInputStream(photoMetaFile);
+            byte[] cipheredFile = new byte[fis.available()];
+            fis.read(cipheredFile);
+            fis.close();
 
-			String comments = getComments(photoMetaFile);
+            byte[] originalPhoto = security.decipher(cipheredFile, photoName);
 
-			fwriter.write(comments);
-
-			fwriter.flush();
-			fwriter.close();
-
-			// sends photo comments and then deletes it
-			File photoComments = new File(photoCommentsTmp);
-			sendFile(photoComments);
-			photoComments.delete();
+            sendFile(originalPhoto, photoComments);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -812,34 +895,38 @@ public class ServerLogic {
 
 	/**
 	 * Gets photo comments, likes and dislikes from photo "meta file" and puts them on a String
-	 * @param photoMetaFilePath
+	 * @param photoName
 	 * @return string containing comments, likes and dislikes
 	 * @throws IOException
 	 */
-	private String getComments(String photoMetaFilePath) throws IOException {
+	private String getComments(String photoName) throws IOException {
 
-		StringBuilder sb = new StringBuilder();
-		BufferedReader freader = new BufferedReader(new FileReader(photoMetaFilePath));
+        StringBuilder sb = new StringBuilder();
+        FileInputStream fis = new FileInputStream(userPath + ServerPaths.FILE_SEPARATOR +
+            photoName + ".txt");
+        byte[] cipheredfile = new byte[fis.available()];
+        fis.read(cipheredfile);
+        fis.close();
+        // photoMetaFilePath.split(".txt")[0] removes the .txt from photoMetaFilePath
+        byte[] originalText = security.decipher(cipheredfile, photoName);
+        String clearFile = new String(originalText);
+        String[] lines = clearFile.split("\n");
 
-		// first line is "trash"
-		freader.readLine();
-		String line = freader.readLine();
+        // first line doesn't matter within this context
+        int i = 1;
+        while (i < lines.length) {
+            if (i == 1) {
+                int likes = Integer.parseInt(lines[i].split(":")[0]);
+                int dislikes = Integer.parseInt(lines[i].split(":")[1]);
 
-		int likes = Integer.parseInt(line.split(":")[0]);
-		int dislikes = Integer.parseInt(line.split(":")[1]);
-
-		sb.append("Likes: " + likes + "\nDislikes: " + dislikes + "\n");
-		sb.append("Comments:\n");
-		// read comments
-		line = freader.readLine();
-		while(line != null) {
-			sb.append(line + "\n");
-			line = freader.readLine();
-		}
-
-		freader.close();
-
-
-		return sb.toString();
-	}
+                sb.append("Likes: ").append(likes).append("\n");
+                sb.append("Dislikes: ").append(dislikes).append("\n");
+                sb.append("Comments:\n");
+            } else {
+                sb.append(lines[i]).append("\n");
+            }
+            i++;
+        }
+        return sb.toString();
+    }
 }
