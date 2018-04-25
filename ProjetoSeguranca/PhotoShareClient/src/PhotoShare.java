@@ -105,9 +105,10 @@ public class PhotoShare {
 
 					else
 						System.err.println("Command Unknown");
+				} else {
+					outStream.writeObject(new String("finished"));
 				}
 
-				outStream.writeObject(new String("finished"));
 
 			}
 
