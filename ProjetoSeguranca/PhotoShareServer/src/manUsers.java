@@ -17,12 +17,7 @@ import javax.crypto.SecretKeyFactory;
 
 public class manUsers {
 
-
-
-	private static final int NUMBER_OF_ITERATIONS = 20;
-	private static final Random RANDOM = new SecureRandom();
-
-	public static boolean createUser(String user, String password) throws IOException, NoSuchAlgorithmException{
+	private static boolean createUser(String user, String password) throws IOException, NoSuchAlgorithmException{
 
 		String userPath = ServerPaths.SERVER_PATH + "users" + ServerPaths.FILE_SEPARATOR + user;
 		File file = new File(userPath + "/followers.txt");
@@ -38,9 +33,10 @@ public class manUsers {
 			}
 			linha = buf.readLine();
 		}
-		byte[]salt = getSalt();
+		byte[] salt = ServerSecurity.getSalt();
 		byte[] pass = password.getBytes();
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		md.update(salt);
 
 		file.getParentFile().mkdirs();
 		file.createNewFile();
@@ -56,7 +52,7 @@ public class manUsers {
 		return true;
 	}
 
-	public static void removeUser(String user) throws IOException {
+	private static void removeUser(String user) throws IOException {
 
 		File file = new File(ServerPaths.PASSWORD_FILE);
 		File newFile = new File(ServerPaths.TEMP_PASSWORD_FILE);
@@ -88,7 +84,7 @@ public class manUsers {
 		System.out.println("Removed " + user);
 	}
 
-	public static boolean changePassword(String user, String password) throws IOException {
+	private static boolean changePassword(String user, String password) throws IOException {
 
 		boolean userExists = false;
 
@@ -112,16 +108,16 @@ public class manUsers {
 				userDetails = linha.split(":");
 
 				if (user.equals(userDetails[0])) {
-					byte[] salt = getSalt();
+					byte[] salt = ServerSecurity.getSalt();
 					byte[] pass = password.getBytes();
 					try {
 						MessageDigest md = MessageDigest.getInstance("SHA-256");
-						md.digest(pass);
+						md.update(salt);
 						fileWriter.write(user + ":" + encode.encodeToString(salt) + ":"
 								+ encode.encodeToString(md.digest(pass)) + "\n");
 					}
 					catch(NoSuchAlgorithmException e){
-						new AssertionError("Could not create MessageDigest",e);
+						System.err.println("Could not create MessageDigest");
 					}
 
 					userExists = true;
@@ -144,51 +140,6 @@ public class manUsers {
 
 	}
 
-	private static SecretKey secretKeyGenerator(String password, byte[] salt) {
-		try {
-			PBEKeySpec passSpec = new PBEKeySpec(password.toCharArray(), salt, NUMBER_OF_ITERATIONS);
-			SecretKeyFactory secPass = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
-			return secPass.generateSecret(passSpec);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			throw new AssertionError("Error hashing the password: " + e.getMessage(), e);
-		}
-	}
-
-	//necessario tratar de possiveis erros a fazer o salted hash?private
-	private static byte[] getSalt() {
-
-		byte[] salt = new byte[32];
-		RANDOM.nextBytes(salt);
-		return salt;
-	}
-
-	private static byte[] getMac(SecretKey key, byte[] passByte){
-
-		try {
-			Mac mac = Mac.getInstance("HmacSHA1");
-			mac.init(key);
-			mac.update(passByte);
-			return mac.doFinal();
-		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
-			throw new AssertionError("Error creating MAC" + e.getMessage(), e);
-		}
-	}
-
-	private static boolean compareMac(byte[] mac, byte[] otherMac) {
-
-		if (mac.length != otherMac.length)
-			return false;
-
-		int count = 0;
-
-		while (count < mac.length) {
-			if (mac[count] != otherMac[count])
-				return false;
-			count++;
-		}
-		return true;
-	}
-
 	public static void main(String[] args) {
 
 		try {
@@ -198,11 +149,11 @@ public class manUsers {
 
 			byte[] salt = {(byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2};
 			byte[] pass = password.getBytes();
-			SecretKey key = secretKeyGenerator(password, salt);
-			byte[] mac = getMac(key, pass);
+			SecretKey key = ServerSecurity.secretKeyGenerator(password, salt);
+			byte[] mac = ServerSecurity.getMac(key, pass);
 			byte[] otherMac;
 
-			File adminFile = new File(ServerPaths.ADMIN_PASSWORD);
+			File adminFile = new File(ServerPaths.ADMIN_FILE);
 			File passwords = new File(ServerPaths.PASSWORD_FILE);
 
 			ObjectInputStream ois;
@@ -226,7 +177,7 @@ public class manUsers {
 			if (!adminFile.exists()) {
 				try {
 					adminFile.createNewFile();
-					fos = new FileOutputStream(ServerPaths.ADMIN_PASSWORD);
+					fos = new FileOutputStream(ServerPaths.ADMIN_FILE);
 					oos = new ObjectOutputStream(fos);
 					oos.writeObject(mac);
 					oos.close();
@@ -236,12 +187,12 @@ public class manUsers {
 			}
 			else {
 				//pegar nos bytes do ficheiro password e na pass do admin
-				fis = new FileInputStream(ServerPaths.ADMIN_PASSWORD);
+				fis = new FileInputStream(ServerPaths.ADMIN_FILE);
 				ois = new ObjectInputStream(fis);
 				otherMac = (byte[]) ois.readObject();
 				ois.close();
 
-				if (!compareMac(mac, otherMac)) {
+				if (!ServerSecurity.compareMac(mac, otherMac)) {
 					System.out.println("The given password is wrong. Terminating the program...");
 					return;
 				}
@@ -290,7 +241,7 @@ public class manUsers {
 		}catch(ClassNotFoundException e){
 			System.err.println("Could not read the bytes of the given file");
 		}catch(NoSuchAlgorithmException e){
-			new AssertionError("Could not create user");
+			System.err.println("Could not create user");
 		}
 	}
 }
