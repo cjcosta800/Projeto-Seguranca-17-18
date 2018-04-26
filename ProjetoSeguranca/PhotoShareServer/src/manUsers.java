@@ -33,14 +33,15 @@ public class manUsers {
 			}
 			linha = buf.readLine();
 		}
-		byte[]salt = getSalt();
+		byte[] salt = getSalt();
 		byte[] pass = password.getBytes();
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
-
+		md.update(salt);
+		Encoder encode = Base64.getEncoder();
+		
 		file.getParentFile().mkdirs();
 		file.createNewFile();
-		Encoder encode = Base64.getEncoder();
-
+		
 		BufferedWriter fileWriter = new BufferedWriter(new FileWriter(ServerPaths.PASSWORD_FILE,true));
 		fileWriter.write(user + ":" + encode.encodeToString(salt) + ":"
 				+ encode.encodeToString(md.digest(pass))+ "\n");
