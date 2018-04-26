@@ -143,6 +143,26 @@ public class manUsers {
 		return true;
 
 	}
+	
+	public static void listUsers() throws IOException{
+		
+		File file = new File(ServerPaths.PASSWORD_FILE);
+		BufferedReader buf = new BufferedReader (new FileReader(file));
+		
+		String linha = buf.readLine();
+		String [] tokens;
+		
+		if(linha == null)
+			System.out.println("There are no registered users yet");
+		else{
+			System.out.println("List of registered users:");
+			while(linha != null){
+				tokens = linha.split(":");
+				Sytem.out.println(tokens[0]);
+				linha = buf.readLine();
+			}
+		}
+	}
 
 	private static SecretKey secretKeyGenerator(String password, byte[] salt) {
 		try {
@@ -252,6 +272,7 @@ public class manUsers {
 			}
 			System.out.println("Authentication successful");
 			while (count == 0) {
+				System.out.println("Available operations are create, remove, change, list and exit");
 				System.out.print("Awaiting your operation: ");
 				String op = scan.next();
 				switch (op) {
@@ -279,13 +300,16 @@ public class manUsers {
 						System.out.println();
 						changePassword(user, userPass);
 						break;
+					case "list":
+						listUsers();
+						break;
 					case "exit":
 						System.out.println("Ending the process. Closing the system...");
 						count--;
 						break;
 					default:
 						System.out.println("Type of inexistent operation.");
-						System.out.println("Please choose one of the 4 valid operations : create, remove, change or exit");
+						System.out.println("Please choose one of the 5 valid operations : create, remove, change, list or exit");
 						break;
 				}
 			}
