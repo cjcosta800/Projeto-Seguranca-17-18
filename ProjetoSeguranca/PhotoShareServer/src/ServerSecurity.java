@@ -1,8 +1,11 @@
 import javax.crypto.*;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Random;
 
 public class ServerSecurity {
 
@@ -10,6 +13,8 @@ public class ServerSecurity {
     private static final int AES_KEY_SIZE_BYTES = 16;
     private static final String SERVER_CERTIFICATE_ALIAS = "server";
     private final KeyStore kstore = KeyStore.getInstance("JKS");
+    private static final int NUMBER_OF_ITERATIONS = 20;
+    private static final Random RANDOM = new SecureRandom();
 
     private KeyGenerator AESKeyGen;
     private String currentUser;
@@ -296,6 +301,51 @@ public class ServerSecurity {
         }
 
         return false;
+    }
+
+    public static SecretKey secretKeyGenerator(String password, byte[] salt) {
+        try {
+            PBEKeySpec passSpec = new PBEKeySpec(password.toCharArray(), salt, NUMBER_OF_ITERATIONS);
+            SecretKeyFactory secPass = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+            return secPass.generateSecret(passSpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new AssertionError("Error hashing the password: " + e.getMessage(), e);
+        }
+    }
+
+    //necessario tratar de possiveis erros a fazer o salted hash?private
+    public static byte[] getSalt() {
+
+        byte[] salt = new byte[32];
+        RANDOM.nextBytes(salt);
+        return salt;
+    }
+
+    public static byte[] getMac(SecretKey key, byte[] passByte){
+
+        try {
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(key);
+            mac.update(passByte);
+            return mac.doFinal();
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            throw new AssertionError("Error creating MAC" + e.getMessage(), e);
+        }
+    }
+
+    public static boolean compareMac(byte[] mac, byte[] otherMac) {
+
+        if (mac.length != otherMac.length)
+            return false;
+
+        int count = 0;
+
+        while (count < mac.length) {
+            if (mac[count] != otherMac[count])
+                return false;
+            count++;
+        }
+        return true;
     }
 
 

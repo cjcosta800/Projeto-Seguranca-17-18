@@ -2,48 +2,34 @@ import javax.crypto.*;
 import java.io.*;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 
 public class ServerLogic {
-	// private final String SERVER_PATH = "../PhotoShareServer/PhotoShare/";
-	private HashMap<String, String> userPwd;
 	private String user;
 	private String userPath;
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 	private ServerSecurity security;
+	private String adminPassword;
 
-	public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream) {
+	public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream,
+        String adminPassword) {
 
 		File serPath = new File(ServerPaths.SERVER_PATH);
 		if(!serPath.isDirectory()) {
 			serPath.mkdirs();
 		}
-
-		verifyPasswordsFile();
 		this.outputStream = outputStream;
 		this.inputStream = inputStream;
+		this.adminPassword = adminPassword;
 
-	}
-
-	/**
-	 * Checks if passwordsPath points to an existing file. If it doesn't, creates a new passwords file
-	 */
-	private void verifyPasswordsFile() {
-		File passwords = new File(ServerPaths.PASSWORD_FILE);
-
-		if(!passwords.isFile()) {
-			try {
-				passwords.createNewFile();
-			} catch (IOException e) {
-				System.err.println("Failed to create passwords file");
-			}
-		}
 	}
 
 	/**
@@ -57,26 +43,54 @@ public class ServerLogic {
 	 * @throws IOException
 	 */
 	public boolean getAuthenticated(String user, String password) throws IOException, NoSuchAlgorithmException,
-			CertificateException, KeyStoreException {
+            CertificateException, KeyStoreException, ClassNotFoundException {
 
-		this.userPwd = loadPasswords();
+        byte[] salt = {(byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea, (byte) 0xf2};
+        byte[] passAdmin = adminPassword.getBytes();
+        byte[] passUser = password.getBytes();
+        SecretKey key = ServerSecurity.secretKeyGenerator(adminPassword, salt);
+        byte[] otherMac = ServerSecurity.getMac(key, passAdmin);
 
-		if (userPwd.containsKey(user)) {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-			if (userPwd.get(user).equals(password)) {
-				this.user = user;
-				this.userPath = ServerPaths.SERVER_PATH + user;
-				this.security = new ServerSecurity(user);
-				return true;
-			} else
-				return false;
-		} else {
-			boolean registered = registerUser(user, password);
+        BufferedReader buf = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
+        FileInputStream fis = new FileInputStream(ServerPaths.ADMIN_PASSWORD);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        byte[] mac = (byte[]) ois.readObject();
+        ois.close();
 
-			this.user = user;
+        if (!ServerSecurity.compareMac(mac, otherMac)){
+            System.out.println("The admin password is wrong. Closing authentication...");
+            return false;
+        }
 
-			return registered;
-		}
+        String saltedPass, linha = buf.readLine();
+        String [] tokens;
+
+        Base64.Decoder decoder = Base64.getDecoder();
+        Base64.Encoder encoder = Base64.getEncoder();
+
+        while(linha != null){
+            tokens = linha.split(":");
+
+            if(user.equals(tokens[0])){
+                byte[] decodedSalt = decoder.decode(tokens[1]);
+                md.update(decodedSalt);
+                saltedPass = encoder.encodeToString(md.digest(passUser));
+                System.out.println(tokens[0]);
+                System.out.println(saltedPass);
+                System.out.println(tokens[2]);
+                if(saltedPass.equals(tokens[2])){
+                    System.out.println("The user " + user +" has been authenticated");
+                    this.security = new ServerSecurity(user);
+                    this.user = user;
+                    return true;
+                }
+            }
+
+            linha = buf.readLine();
+        }
+        return false;
 
 	}
 
@@ -85,41 +99,22 @@ public class ServerLogic {
 	 * @param userToFollow
 	 * @return true if user exists
 	 */
-	private boolean isUser(String userToFollow) {
+	private boolean isUser(String userToFollow) throws IOException {
 
-		return userPwd.containsKey(userToFollow);
+        BufferedReader buf = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
+		String line = buf.readLine();
+        String[] tokens;
 
-	}
+		while(line != null){
+			tokens = line.split(":");
 
-	/**
-	 * Loads users and passwords from the passwords file (provided by passwordsPath)
-	 * @return HashMap<User, Password> containing all users and corresponding password
-	 *
-	 @throws IOException
-	 */
-	private HashMap<String, String> loadPasswords() throws IOException {
+			if(userToFollow.equals(tokens[0]))
+					return true;
 
-		BufferedReader filereader = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
-
-		String line = filereader.readLine();
-
-		// HashMap <User, Password>
-		HashMap<String, String> userpwd = new HashMap<>();
-		String tokenised[];
-		// user;password
-		while (line != null) {
-
-			tokenised = line.split(":");
-
-			userpwd.put(tokenised[0], tokenised[1]);
-
-			line = filereader.readLine();
-
+			line = buf.readLine();
 		}
+		return false;
 
-		filereader.close();
-
-		return userpwd;
 	}
 
 	/**

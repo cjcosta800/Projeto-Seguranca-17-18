@@ -1,5 +1,4 @@
 import java.io.*;
-import java.security.InvalidKeyException;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Scanner;
@@ -7,11 +6,7 @@ import java.util.Random;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.SecretKeyFactory;
 
 
 
@@ -158,20 +153,14 @@ public class manUsers {
 			System.out.println("List of registered users:");
 			while(linha != null){
 				tokens = linha.split(":");
-				Sytem.out.println(tokens[0]);
+				System.out.println(tokens[0]);
 				linha = buf.readLine();
 			}
 		}
 	}
 
 	private static SecretKey secretKeyGenerator(String password, byte[] salt) {
-		try {
-			PBEKeySpec passSpec = new PBEKeySpec(password.toCharArray(), salt, NUMBER_OF_ITERATIONS);
-			SecretKeyFactory secPass = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
-			return secPass.generateSecret(passSpec);
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-			throw new AssertionError("Error hashing the password: " + e.getMessage(), e);
-		}
+	    return ServerSecurity.secretKeyGenerator(password, salt);
 	}
 
 	//necessario tratar de possiveis erros a fazer o salted hash?private
@@ -183,15 +172,7 @@ public class manUsers {
 	}
 
 	private static byte[] getMac(SecretKey key, byte[] passByte){
-
-		try {
-			Mac mac = Mac.getInstance("HmacSHA1");
-			mac.init(key);
-			mac.update(passByte);
-			return mac.doFinal();
-		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
-			throw new AssertionError("Error creating MAC" + e.getMessage(), e);
-		}
+		return ServerSecurity.getMac(key, passByte);
 	}
 
 	private static boolean compareMac(byte[] mac, byte[] otherMac) {
