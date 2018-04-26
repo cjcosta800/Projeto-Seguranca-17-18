@@ -112,6 +112,7 @@ public class manUsers {
 					byte[] pass = password.getBytes();
 					try {
 						MessageDigest md = MessageDigest.getInstance("SHA-256");
+						md.update(salt);
 						md.digest(pass);
 						fileWriter.write(user + ":" + encode.encodeToString(salt) + ":"
 								+ encode.encodeToString(md.digest(pass)) + "\n");
