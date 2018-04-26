@@ -24,7 +24,7 @@ public class manUsers {
 
 	public static boolean createUser(String user, String password) throws IOException, NoSuchAlgorithmException{
 
-		String userPath = ServerPaths.SERVER_PATH + "users" + ServerPaths.FILE_SEPARATOR + user;
+		String userPath = ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR + user;
 		File file = new File(userPath + "/followers.txt");
 		BufferedReader buf = new BufferedReader(new FileReader(ServerPaths.PASSWORD_FILE));
 		String linha = buf.readLine();
@@ -212,7 +212,11 @@ public class manUsers {
 
 			String user, userPass;
 			int count = 0;
-
+			File serPath = new File(ServerPaths.SERVER_PATH);
+			//verifica se a diretoria SERVER_PATH existe
+			if(!serPath.isDirectory()) {
+				serPath.mkdirs();
+			}
 			//verifica se o ficheiro passwords existe, se nao existir cria-o
 			if (!passwords.exists()) {
 				try {
