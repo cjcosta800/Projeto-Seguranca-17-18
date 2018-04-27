@@ -77,13 +77,11 @@ public class ServerLogic {
                 byte[] decodedSalt = decoder.decode(tokens[1]);
                 md.update(decodedSalt);
                 saltedPass = encoder.encodeToString(md.digest(passUser));
-                System.out.println(tokens[0]);
-                System.out.println(saltedPass);
-                System.out.println(tokens[2]);
                 if(saltedPass.equals(tokens[2])){
                     System.out.println("The user " + user +" has been authenticated");
                     this.security = new ServerSecurity(user);
-                    this.user = user;
+					this.user = user;
+					this.userPath = ServerPaths.SERVER_PATH + user + ServerPaths.FILE_SEPARATOR;
                     return true;
                 }
             }
@@ -136,7 +134,6 @@ public class ServerLogic {
 		}
 
 		File newPhoto = new File(userPath + ServerPaths.FILE_SEPARATOR + photoName);
-
 		if (!newPhoto.exists()) {
 
 			outputStream.writeObject(new Boolean(false));
@@ -152,11 +149,11 @@ public class ServerLogic {
 			// reads all bytes from stream to an array
 			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1);
 			// cipher array
-                        byte[] photocipher = security.cipher(buffer, photoName);
-                        // writes ciphered photo to photo file
-                        fos.write(photocipher);
-                        fos.flush();
-                        fos.close();
+        	byte[] photocipher = security.cipher(buffer, photoName);
+			// writes ciphered photo to photo file
+			fos.write(photocipher);
+			fos.flush();
+			fos.close();
 
 			// writes new meta file
 			createPhotoMetaFile(photoName);
@@ -347,7 +344,7 @@ public class ServerLogic {
 				if(photoNames.size() != 0) {
 					for (String photo : photoNames) {
 						System.out.println("Sending photo " + photo + " and comments...");
-
+						
 						sendPhoto(photo, userIdPath);
 						sendComments(photo, userIdPath);
 					}

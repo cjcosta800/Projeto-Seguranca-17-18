@@ -347,7 +347,7 @@ public class ClientLogic {
             while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
                 writefile.write(buffer, 0, byteread);
             }
-
+            outputStream.flush();
             writefile.flush();
             writefile.close();
             fos.close();
