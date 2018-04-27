@@ -10,9 +10,7 @@ import javax.crypto.SecretKey;
 
 
 
-public class manUsers {
-
-
+public class ManUsers {
 
 	private static final int NUMBER_OF_ITERATIONS = 20;
 	private static final Random RANDOM = new SecureRandom();

@@ -1,12 +1,14 @@
 Para compilar o cliente e o servidor:
 ./compile.sh
 
+Antes de iniciar o servidor deverá criar utilizadores através do ManUsers, para tal, deve colocar-se na pasta PhotoShareServer e correr o seguinte comando:
+java -out out/ ManUsers
+O programa perguntar-lhe-á uma palavra passe de administrador que será utilizada para correr o servidor.
+
 Para correr o servidor deve colocar-se na pasta PhotoShareServer e correr o seguinte comando:
-java -Djava.security.manager -Djava.security.policy=src/server.policy -cp out/ PhotoShareServer 23232
+java -Djava.security.manager -Djava.security.policy=src/server.policy -cp out/ PhotoShareServer 23232 <adminpassword> grupo026
 
 Para correr o cliente deve colocar-se na pasta PhotoShareCliente e correr um dos seguintes comandos:
-    - Criar novo utilizador:
-    java -Djava.security.manager -Djava.security.policy=src/client.policy -cp out/ PhotoShare <user> <password> <ip>:23232
 
     - Adicionar uma foto: (as fotos devem estar dentro da pasta PhotoShareClient)
     java -Djava.security.manager -Djava.security.policy=src/client.policy -cp out/ PhotoShare <user> <password> <ip>:23232 -a <photo1> [<photo2> <photo3> ...]

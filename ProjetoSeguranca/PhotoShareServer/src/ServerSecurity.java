@@ -18,12 +18,14 @@ public class ServerSecurity {
 
     private KeyGenerator AESKeyGen;
     private String currentUser;
+    private String keyStoresPassword;
 
-    public ServerSecurity(String currentUser) throws NoSuchAlgorithmException,
+    public ServerSecurity(String currentUser, String keyStoresPassword) throws NoSuchAlgorithmException,
             KeyStoreException, IOException, CertificateException {
         this.currentUser = currentUser;
+        this.keyStoresPassword = keyStoresPassword;
         this.AESKeyGen = KeyGenerator.getInstance("AES");
-        this.kstore.load(new FileInputStream(ServerPaths.KEYSTORE_FILE), "grupo026".toCharArray());
+        this.kstore.load(new FileInputStream(ServerPaths.KEYSTORE_FILE), keyStoresPassword.toCharArray());
         // tem de ser alterado para uma pw por arg
     }
 
@@ -150,7 +152,7 @@ public class ServerSecurity {
         byte[] key = new byte[AES_KEY_SIZE_BYTES];
 
         try {
-            Key privateServerKey = kstore.getKey(SERVER_CERTIFICATE_ALIAS, "grupo026".toCharArray());
+            Key privateServerKey = kstore.getKey(SERVER_CERTIFICATE_ALIAS, keyStoresPassword.toCharArray());
 
             Cipher unwrapper = Cipher.getInstance("RSA");
             unwrapper.init(Cipher.UNWRAP_MODE, privateServerKey);
@@ -192,7 +194,7 @@ public class ServerSecurity {
      */
     public byte[] signFile(byte[] toSign, String filename) {
         try {
-            PrivateKey privateServerKey = (PrivateKey) kstore.getKey(SERVER_CERTIFICATE_ALIAS, "grupo026".toCharArray());
+            PrivateKey privateServerKey = (PrivateKey) kstore.getKey(SERVER_CERTIFICATE_ALIAS, keyStoresPassword.toCharArray());
             Signature sign = Signature.getInstance("SHA1withRSA");
             sign.initSign(privateServerKey);
 

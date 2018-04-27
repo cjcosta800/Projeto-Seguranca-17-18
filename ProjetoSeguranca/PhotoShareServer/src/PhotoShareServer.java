@@ -14,24 +14,22 @@ import java.security.cert.CertificateException;
 
 public class PhotoShareServer {
 
-
-	final static String password = "grupo026";
-
 	public static void main(String[] args) throws IOException {
 		
 		System.setProperty("javax.net.ssl.keyStore",ServerPaths.SSLKEYSTORE_FILE);
-		System.setProperty("javax.net.ssl.keyStorePassword", password);
-
-		/* Check number of args. Must be 1 */
-		if (args.length != 2) {
+		
+		/* Check number of args. Must be 3 */
+		if (args.length != 3) {
 			System.err.println("Server must be run with the following command: 'PhotoShareServer <port>'");
-			System.err.println("For example: 'PhotoShareServer 23232 <adminPassword>'");
+			System.err.println("For example: 'PhotoShareServer 23232 <adminPassword> <keystorePassword>'");
 			System.exit(0);
 		}
-
+		
 		int socket = Integer.parseInt(args[0]);
 		String adminPassword = args[1];
-
+		String keyStoresPassword = args[2];
+		System.setProperty("javax.net.ssl.keyStorePassword", keyStoresPassword);
+		
 		if (socket != 23232) {
 			System.err.println("PhotoShareServer listens at socket 23232");
 			System.exit(0);
@@ -39,12 +37,12 @@ public class PhotoShareServer {
 
 		System.out.println("Listening for new connections at " + args[0] + "...");
 		PhotoShareServer photoShareServer = new PhotoShareServer();
-		photoShareServer.startServer(socket, adminPassword);
+		photoShareServer.startServer(socket, adminPassword, keyStoresPassword);
 
 
 	}
 
-	public void startServer(int socket, String adminPassword) {
+	public void startServer(int socket, String adminPassword, String keyStoresPassword) {
 
 		SSLServerSocketFactory sslfact = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
 		SSLServerSocket ssl = null;
@@ -61,7 +59,7 @@ public class PhotoShareServer {
 			Socket inSoc = null;
 			try {
 				inSoc = ssl.accept();
-				ServerThread newServerThread = new ServerThread(inSoc, adminPassword);
+				ServerThread newServerThread = new ServerThread(inSoc, adminPassword, keyStoresPassword);
 				newServerThread.start();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -75,10 +73,12 @@ public class PhotoShareServer {
 
 		private Socket socket = null;
 		private String adminPassword;
+		private String keyStoresPassword;
 
-		ServerThread(Socket inSoc, String adminPassword) {
+		ServerThread(Socket inSoc, String adminPassword, String keyStoresPassword) {
 			socket = inSoc;
 			this.adminPassword = adminPassword;
+			this.keyStoresPassword = keyStoresPassword;
 			System.out.println("New connection with client");
 		}
 
@@ -90,7 +90,7 @@ public class PhotoShareServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				ServerLogic serverLogic = new ServerLogic(outStream, inStream, adminPassword);
+				ServerLogic serverLogic = new ServerLogic(outStream, inStream, adminPassword, keyStoresPassword);
 
 				String user = null;
 				String password = null;

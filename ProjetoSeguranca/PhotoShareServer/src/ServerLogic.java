@@ -18,9 +18,10 @@ public class ServerLogic {
 	private ObjectInputStream inputStream;
 	private ServerSecurity security;
 	private String adminPassword;
+	private String keystoresPassword;
 
 	public ServerLogic(ObjectOutputStream outputStream, ObjectInputStream inputStream,
-        String adminPassword) {
+        String adminPassword, String keystoresPassword) {
 
 		File serPath = new File(ServerPaths.SERVER_PATH);
 		if(!serPath.isDirectory()) {
@@ -29,6 +30,7 @@ public class ServerLogic {
 		this.outputStream = outputStream;
 		this.inputStream = inputStream;
 		this.adminPassword = adminPassword;
+		this.keystoresPassword = keystoresPassword;
 
 	}
 
@@ -79,7 +81,7 @@ public class ServerLogic {
                 saltedPass = encoder.encodeToString(md.digest(passUser));
                 if(saltedPass.equals(tokens[2])){
                     System.out.println("The user " + user +" has been authenticated");
-                    this.security = new ServerSecurity(user);
+                    this.security = new ServerSecurity(user, keystoresPassword);
 					this.user = user;
 					this.userPath = ServerPaths.SERVER_PATH + user + ServerPaths.FILE_SEPARATOR;
                     return true;
