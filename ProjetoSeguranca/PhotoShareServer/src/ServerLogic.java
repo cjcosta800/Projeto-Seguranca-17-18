@@ -148,13 +148,14 @@ public class ServerLogic {
 			byte[] buffer = new byte[photoSize];
 			FileOutputStream fos = new FileOutputStream(newPhoto);
 			int byteread = 0;
-			// reads all bytes from stream to an array
-			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1);
-			// cipher array
-        	byte[] photocipher = security.cipher(buffer, photoName);
-			// writes ciphered photo to photo file
-			fos.write(photocipher);
+			CipherOutputStream cos = security.createCipherOutputStream(fos, photoName);
+			// reads a byte from stream, ciphers it and then saves it on a file
+			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
+                cos.write(buffer, 0, byteread);
+            }
+            cos.flush();
 			fos.flush();
+			cos.close();
 			fos.close();
 
 			// writes new meta file
@@ -839,6 +840,7 @@ public class ServerLogic {
 		try {
 		    File photo = new File(photoPath);
 			FileInputStream fis = new FileInputStream(photo);
+			CipherInputStream cis = security.createCipherInputStream(fis, photoName);
 			byte[] cipheredFile = new byte[(int) photo.length()];
 			fis.read(cipheredFile);
 			fis.close();
@@ -853,8 +855,14 @@ public class ServerLogic {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
+		} catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/**
 	 * Sends photo comments (and likes/dislikes) to client

@@ -38,10 +38,7 @@ public class ServerSecurity {
     public byte[] cipher(byte[] clear, String filename) {
 
         try {
-            Key fileKey = loadKeyFromFile(filename);
-
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.ENCRYPT_MODE, fileKey);
+            Cipher cipher = getFileCipher(filename);
 
             return cipher.doFinal(clear);
         } catch (NoSuchAlgorithmException e) {
@@ -60,6 +57,40 @@ public class ServerSecurity {
     }
 
     /**
+     *
+     * @param filename
+     * @return
+     * @throws InvalidKeyException
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     */
+    public Cipher getFileCipher(String filename) throws
+            InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+        Key fileKey = loadKeyFromFile(filename);
+
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, fileKey);
+        return cipher;
+    }
+
+    /**
+     *
+     * @param filename
+     * @return
+     * @throws InvalidKeyException
+     * @throws NoSuchPaddingException
+     * @throws NoSuchAlgorithmException
+     */
+    public Cipher getFileDecipher(String filename) throws
+            InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException{
+        Key fileKey = loadKeyFromFile(filename);
+
+        Cipher decipher = Cipher.getInstance("AES");
+        decipher.init(Cipher.DECRYPT_MODE, fileKey);
+        return decipher;
+    }
+
+    /**
      * Given a ciphered byte array and a file name (to get the key) it will decipher the
      * byte array
      * @param ciphered
@@ -69,10 +100,7 @@ public class ServerSecurity {
     public byte[] decipher(byte[] ciphered, String filename) {
 
         try {
-            Key fileKey = loadKeyFromFile(filename);
-
-            Cipher cipher = Cipher.getInstance("AES");
-            cipher.init(Cipher.DECRYPT_MODE, fileKey);
+            Cipher cipher = getFileDecipher(filename);
 
             return cipher.doFinal(ciphered);
         } catch (NoSuchAlgorithmException e) {
@@ -351,4 +379,15 @@ public class ServerSecurity {
     }
 
 
+    public CipherOutputStream createCipherOutputStream(FileOutputStream fos, String photoName)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+        Cipher cipher = getFileCipher(photoName);
+        return new CipherOutputStream(fos, cipher);
+    }
+
+    public CipherInputStream createCipherInputStream(FileInputStream fis, String photoName)
+            throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+        Cipher cipher = getFileDecipher(photoName);
+        return new CipherInputStream(fis, cipher);
+    }
 }
