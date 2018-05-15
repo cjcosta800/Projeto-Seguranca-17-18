@@ -340,16 +340,15 @@ public class ServerLogic {
 
 			if (isFollower == 0) {
 
-				String userIdPath = ServerPaths.SERVER_PATH + userId;
-				ArrayList<String> photoNames = getPhotosList(userIdPath);
+				ArrayList<String> photoNames = getPhotosList(userPath);
 
 				outputStream.writeObject(new Integer(photoNames.size()));
 				if(photoNames.size() != 0) {
 					for (String photo : photoNames) {
 						System.out.println("Sending photo " + photo + " and comments...");
-						
-						sendPhoto(photo, userIdPath);
-						sendComments(photo, userIdPath);
+
+						sendPhoto(photo);
+						sendComments(photo);
 					}
 				}
 
@@ -809,21 +808,43 @@ public class ServerLogic {
 
 	/**
 	 * Sends a file to client
-	 * @param file file to be sent to client
      * @param filename name of the file to be sent to the client
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private void sendFile(byte[] file, String filename) throws IOException, ClassNotFoundException {
+	private void sendFile(String filename, String sendFileName)
+            throws IOException, ClassNotFoundException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException {
 
-		outputStream.writeObject(new String(filename));
+        String photoPath = userPath + ServerPaths.FILE_SEPARATOR + filename;
+        // sends filename
+		outputStream.writeObject(new String(sendFileName));
 
 		Boolean canProceed = (Boolean) inputStream.readObject();
 
 		if(canProceed) {
-			outputStream.writeObject(new Integer(file.length));
-            //outputStream.writeObject(file);
-			outputStream.write(file,0, file.length);
+		    File file = new File(photoPath);
+		    FileInputStream fis = new FileInputStream(photoPath);
+		    CipherInputStream cis = security.createCipherInputStream(fis, filename);
+		    // creates buffer with file size
+		    byte[] buffer = new byte[(int) file.length()];
+		    // reads and deciphers file to buffer
+		    /*int fileSize = cis.read(buffer, 0, buffer.length);
+		    if (fileSize == -1) {
+		        outputStream.writeObject(new Integer(1));
+		        return;
+            }*/
+            int byteread = 0;
+		    while ((byteread = cis.read(buffer, 0, buffer.length)) != -1) {
+		        outputStream.write(buffer, 0, buffer.length);
+            }
+
+            System.out.println(buffer.length);
+		    System.out.println(fileSize);
+		    // send file size to client
+			outputStream.writeObject(new Integer(buffer.length));
+            // send file to client
+			outputStream.write(buffer,0, fileSize);
 			outputStream.flush();
 		}
 	}
@@ -831,23 +852,12 @@ public class ServerLogic {
 	/**
 	 * Sends a photo to client
 	 * @param photoName
-	 * @param userIdPath
 	 */
-	private void sendPhoto(String photoName, String userIdPath) {
-
-	    String photoPath = userIdPath + ServerPaths.FILE_SEPARATOR + photoName;
+	private void sendPhoto(String photoName) {
 
 		try {
-		    File photo = new File(photoPath);
-			FileInputStream fis = new FileInputStream(photo);
-			CipherInputStream cis = security.createCipherInputStream(fis, photoName);
-			byte[] cipheredFile = new byte[(int) photo.length()];
-			fis.read(cipheredFile);
-			fis.close();
 
-			byte[] originalPhoto = security.decipher(cipheredFile, photoName);
-
-            sendFile(originalPhoto, photoName);
+            sendFile(photoName, photoName);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -867,23 +877,16 @@ public class ServerLogic {
 	/**
 	 * Sends photo comments (and likes/dislikes) to client
 	 * @param photoName
-	 * @param userIdPath
 	 */
-	private void sendComments(String photoName, String userIdPath) {
+	private void sendComments(String photoName) {
 
-		String photoMetaFile = userIdPath + ServerPaths.FILE_SEPARATOR + photoName + ".txt";
+		String photoMetaFile = ServerPaths.FILE_SEPARATOR + photoName + ".txt";
 		//photo-comments.txt
 		String photoComments = photoName + "-comments.txt";
 
 		try {
-		    FileInputStream fis = new FileInputStream(photoMetaFile);
-            byte[] cipheredFile = new byte[fis.available()];
-            fis.read(cipheredFile);
-            fis.close();
 
-            byte[] originalPhoto = security.decipher(cipheredFile, photoName);
-
-            sendFile(originalPhoto, photoComments);
+            sendFile(photoMetaFile, photoComments);
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -891,9 +894,15 @@ public class ServerLogic {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
 	/**
 	 * Gets photo comments, likes and dislikes from photo "meta file" and puts them on a String
