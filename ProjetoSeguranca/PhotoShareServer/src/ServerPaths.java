@@ -8,4 +8,5 @@ class ServerPaths {
     public static final String SSLKEYSTORE_FILE = "src" + FILE_SEPARATOR + "SSLServer.keyStore";
     public static final String TEMP_PASSWORD_FILE = SERVER_PATH + "temp_password.txt";
     public static final String ADMIN_PASSWORD = SERVER_PATH + "adminPass.txt";
+    public static final int BUFFER_SIZE = 16 * 1024;
 }

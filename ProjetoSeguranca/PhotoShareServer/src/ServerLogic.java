@@ -356,9 +356,17 @@ public class ServerLogic {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		} catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
 	/**
 	 * Fetches photo comments, likes and dislikes and sends to server
@@ -807,101 +815,71 @@ public class ServerLogic {
 	}
 
 	/**
-	 * Sends a file to client
-     * @param filename name of the file to be sent to the client
+	 * Sends a photo to client
+     * @param photoName name of the file to be sent to the client
 	 * @throws IOException
 	 * @throws ClassNotFoundException
 	 */
-	private void sendFile(String filename, String sendFileName)
+	private void sendPhoto(String photoName)
             throws IOException, ClassNotFoundException, NoSuchPaddingException,
             NoSuchAlgorithmException, InvalidKeyException {
 
-        String photoPath = userPath + ServerPaths.FILE_SEPARATOR + filename;
-        // sends filename
-		outputStream.writeObject(new String(sendFileName));
+        String photoPath = userPath + ServerPaths.FILE_SEPARATOR + photoName;
+        // sends photoName
+		outputStream.writeObject(new String(photoName));
 
 		Boolean canProceed = (Boolean) inputStream.readObject();
 
 		if(canProceed) {
-		    File file = new File(photoPath);
-		    FileInputStream fis = new FileInputStream(photoPath);
-		    CipherInputStream cis = security.createCipherInputStream(fis, filename);
-		    // creates buffer with file size
-		    byte[] buffer = new byte[(int) file.length()];
-		    // reads and deciphers file to buffer
-		    /*int fileSize = cis.read(buffer, 0, buffer.length);
-		    if (fileSize == -1) {
-		        outputStream.writeObject(new Integer(1));
-		        return;
-            }*/
-            int byteread = 0;
-		    while ((byteread = cis.read(buffer, 0, buffer.length)) != -1) {
-		        outputStream.write(buffer, 0, buffer.length);
-            }
-
-            System.out.println(buffer.length);
-		    System.out.println(fileSize);
-		    // send file size to client
-			outputStream.writeObject(new Integer(buffer.length));
-            // send file to client
-			outputStream.write(buffer,0, fileSize);
+		    sendFile(photoPath, photoName);
 			outputStream.flush();
 		}
 	}
 
-	/**
-	 * Sends a photo to client
-	 * @param photoName
-	 */
-	private void sendPhoto(String photoName) {
+    /**
+     * Sends comments file to client
+     * @param photoName name of the photo to send the comments
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    private void sendComments(String photoName)
+            throws IOException, ClassNotFoundException, NoSuchPaddingException,
+            NoSuchAlgorithmException, InvalidKeyException {
 
-		try {
+        String photoMetaFile = getPhotoMetaPath(this.user, photoName);
+        //photo-comments.txt
+        String photoComments = photoName + "-comments.txt";
+        // sends photoName
+        outputStream.writeObject(new String(photoComments));
 
-            sendFile(photoName, photoName);
+        Boolean canProceed = (Boolean) inputStream.readObject();
 
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
+        if(canProceed) {
+            sendFile(photoMetaFile, photoName);
+            outputStream.flush();
         }
     }
 
-	/**
-	 * Sends photo comments (and likes/dislikes) to client
-	 * @param photoName
-	 */
-	private void sendComments(String photoName) {
+    /**
+     * Sends a file to a client
+     * @param filePath
+     * @param photoName
+     */
+    private void sendFile(String filePath, String photoName)
+            throws IOException, NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidKeyException {
 
-		String photoMetaFile = ServerPaths.FILE_SEPARATOR + photoName + ".txt";
-		//photo-comments.txt
-		String photoComments = photoName + "-comments.txt";
+        FileInputStream fis = new FileInputStream(filePath);
+        CipherInputStream cis = security.createCipherInputStream(fis, photoName);
+        // creates buffer with 16kB
+        byte[] buffer = new byte[ServerPaths.BUFFER_SIZE];
 
-		try {
-
-            sendFile(photoMetaFile, photoComments);
-
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
+        // send file to client
+        int byteread;
+        while ((byteread = cis.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, byteread);
         }
-
+        cis.close();
     }
 
 	/**
