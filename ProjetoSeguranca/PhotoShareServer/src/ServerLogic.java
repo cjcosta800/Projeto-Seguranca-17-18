@@ -148,7 +148,7 @@ public class ServerLogic {
 			byte[] buffer = new byte[photoSize];
 			FileOutputStream fos = new FileOutputStream(newPhoto);
 			int byteread = 0;
-			CipherOutputStream cos = security.createCipherOutputStream(fos, photoName);
+			CipherOutputStream cos = security.createCipherOutputStream(fos, this.userPath, photoName);
 			// reads a byte from stream, ciphers it and then saves it on a file
 			while ((byteread = inputStream.read(buffer, 0, buffer.length)) != -1) {
                 cos.write(buffer, 0, byteread);
@@ -240,7 +240,7 @@ public class ServerLogic {
 		sb.append("0:0\n");
 		String result = sb.toString();
 		// ciphers text
-		byte[] cipherText = security.cipher(result.getBytes(), photoName);
+		byte[] cipherText = security.cipher(result.getBytes(), this.userPath, photoName);
 		// writes ciphered text to a file
 		fos.write(cipherText);
 		fos.flush();
@@ -295,7 +295,9 @@ public class ServerLogic {
 					byte[] cipheredfile = new byte[fis.available()];
 					fis.read(cipheredfile);
 					fis.close();
-					byte[] originalText = security.decipher(cipheredfile, photoName);
+					String otherUserPath = ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR +
+							userId + ServerPaths.FILE_SEPARATOR;
+					byte[] originalText = security.decipher(cipheredfile, otherUserPath, photoName);
 					StringBuilder sb = new StringBuilder(new String(originalText));
 					// writes date as: 04/07/2001
 					SimpleDateFormat sdfDate = new SimpleDateFormat("dd/MM/yy");
@@ -304,7 +306,7 @@ public class ServerLogic {
 
 					sb.append("[" + date + "] " + this.user + ": " + comment + "\n");
 
-					byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+					byte[] ciphered = security.cipher(sb.toString().getBytes(), otherUserPath, photoName);
 
 					FileOutputStream fos = new FileOutputStream(photoMetaPath);
 					fos.write(ciphered);
@@ -416,14 +418,16 @@ public class ServerLogic {
         try {
 
             if (isFollower == 0) {
-
+				System.out.println("is follower");
                 if (photometapath != null) {
 
 					FileInputStream fis = new FileInputStream(photometapath);
 					byte[] cipheredfile = new byte[fis.available()];
 					fis.read(cipheredfile);
 					fis.close();
-					String originalText = new String(security.decipher(cipheredfile, photoName));
+					String otherUserPath = ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR +
+							userId + ServerPaths.FILE_SEPARATOR;
+					String originalText = new String(security.decipher(cipheredfile, otherUserPath, photoName));
 					String[] lines = originalText.split("\n");
 					StringBuilder sb = new StringBuilder();
 
@@ -442,7 +446,7 @@ public class ServerLogic {
 						count++;
 					}
 
-                    byte[] ciphered = security.cipher(sb.toString().getBytes(), photoName);
+                    byte[] ciphered = security.cipher(sb.toString().getBytes(), otherUserPath, photoName);
                     FileOutputStream fos = new FileOutputStream(photometapath);
                     fos.write(ciphered);
                     fos.flush();
@@ -484,7 +488,7 @@ public class ServerLogic {
 		        security.saveSign(signature, "followers.txt");
 		        // cifrar o conteudo
                 security.generateAESKey("followers.txt");
-		        byte[] ciphered = security.cipher(toCipher.getBytes(), "followers.txt");
+		        byte[] ciphered = security.cipher(toCipher.getBytes(), this.userPath, "followers.txt");
                 // guardar o conteudo cifrado
 		        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
 		        oos.writeObject(ciphered);
@@ -504,9 +508,10 @@ public class ServerLogic {
                 ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
                 byte[] fileByted = (byte[]) ois.readObject();
                 String followersString = new String
-                        (security.decipher(fileByted, "followers.txt"));
+						(security.decipher(fileByted, this.userPath, "followers.txt"));
+				ois.close();
 
-                if(security.verifySignature("followers.txt", followersString.getBytes())) {
+                if(security.verifySignature("followers.txt", this.userPath, followersString.getBytes())) {
 
                     String followersByLines[] = followersString.split("\n");
                     if(isUser(userToFollow)) {
@@ -522,7 +527,7 @@ public class ServerLogic {
                     byte[] newSignature = security.signFile(followersString.getBytes(), "followers.txt");
                     security.saveSign(newSignature, "followers.txt");
 
-                    byte[] cipheredFile = security.cipher(followersString.getBytes(), "followers.txt");
+                    byte[] cipheredFile = security.cipher(followersString.getBytes(), this.userPath, "followers.txt");
                     ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followersPath));
                     oos.writeObject(cipheredFile);
 
@@ -594,10 +599,10 @@ public class ServerLogic {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
             byte[] fileByted = (byte[]) ois.readObject();
             String followersString = new String
-                    (security.decipher(fileByted, "followers.txt"));
+                    (security.decipher(fileByted, this.userPath, "followers.txt"));
             String[] followersSplitted = followersString.split("\n");
 
-            if(security.verifySignature("followers.txt", followersString.getBytes())) {
+            if(security.verifySignature("followers.txt", this.userPath, followersString.getBytes())) {
                 if(userIsFollowedBy(userToUnfollow, followersSplitted)) {
                     int count = 0;
                     StringBuilder sb = new StringBuilder();
@@ -613,7 +618,7 @@ public class ServerLogic {
                     byte[] newsignature = security.signFile(newFollowersFile.getBytes(), "followers.txt");
                     security.saveSign(newsignature, "followers.txt");
 
-                    byte[] cipheredFollowers = security.cipher(newFollowersFile.getBytes(), "followers.txt");
+                    byte[] cipheredFollowers = security.cipher(newFollowersFile.getBytes(), this.userPath, "followers.txt");
                     ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(followers));
                     oos.writeObject(cipheredFollowers);
                     oos.flush();
@@ -728,7 +733,7 @@ public class ServerLogic {
             fis.read(ciphered);
             fis.close();
 
-			byte[] original = security.decipher(ciphered, photoName);
+			byte[] original = security.decipher(ciphered, userIdPath, photoName);
             // return date (line 1)
 			return new String(original).split("\n")[0];
 
@@ -752,27 +757,35 @@ public class ServerLogic {
 	    // if userId is the localuser, he got permissions
 	    if (userId.equals(this.user)) {
 	        return 0;
-        }
-
-        FileReader userIdFollowers = null;
+		}
 
         try {
+            File followers = new File(ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR + "followers.txt");
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(followers));
+			byte[] fileByted = (byte[]) ois.readObject();
+			ois.close();
+			String otherUserPath = ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR + userId + ServerPaths.FILE_SEPARATOR;
+			String followersString = new String
+					(security.decipher(fileByted, otherUserPath,"followers.txt"));
 
-            userIdFollowers = new FileReader(ServerPaths.SERVER_PATH + userId + ServerPaths.FILE_SEPARATOR + "followers.txt");
+			boolean found = false;
 
-            BufferedReader filereader = new BufferedReader(userIdFollowers);
+			if(security.verifySignature("followers.txt", otherUserPath, followersString.getBytes())) {
+				String followersByLines[] = followersString.split("\n");
 
-            String line = filereader.readLine();
-            boolean found = false;
+				int line = 0;
+				while(line < followersByLines.length && !found) {
+					System.out.println(followersByLines[line]);
+					if(followersByLines[line].equals(this.user)) {
+						found = true;
+					}
+					line++;
+				}
 
-            while (line != null && !found) {
-
-                if (user.equals(line)) {
-                    found = true;
-                }
-
-                line = filereader.readLine();
-            }
+			} else {
+				outputStream.writeObject(1);
+				throw new SecurityException(user + "'s followers file was violated!");
+			}
 
             return found ? 0 : 1;
 
@@ -781,9 +794,13 @@ public class ServerLogic {
             // user doesn't exist
             return 2;
         } catch (IOException e) {
-            System.err.println("IO Error occurred while reading followers file.");
+            e.printStackTrace();
+	    	//System.err.println("IO Error occurred while reading followers file.");
             return 3;
-        }
+        } catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			return 3;
+		}
 
 	}
 
@@ -872,7 +889,7 @@ public class ServerLogic {
             InvalidKeyException {
 
         FileInputStream fis = new FileInputStream(filePath);
-        CipherInputStream cis = security.createCipherInputStream(fis, photoName);
+        CipherInputStream cis = security.createCipherInputStream(fis, this.userPath, photoName);
         // creates buffer with 16kB
         byte[] buffer = new byte[ServerPaths.BUFFER_SIZE];
 
@@ -899,7 +916,7 @@ public class ServerLogic {
         fis.read(cipheredfile);
         fis.close();
         // photoMetaFilePath.split(".txt")[0] removes the .txt from photoMetaFilePath
-        byte[] originalText = security.decipher(cipheredfile, photoName);
+        byte[] originalText = security.decipher(cipheredfile, this.userPath, photoName);
         String clearFile = new String(originalText);
         String[] lines = clearFile.split("\n");
 

@@ -35,10 +35,10 @@ public class ServerSecurity {
      * @param filename
      * @return ciphered text
      */
-    public byte[] cipher(byte[] clear, String filename) {
+    public byte[] cipher(byte[] clear, String userPath,String filename) {
 
         try {
-            Cipher cipher = getFileCipher(filename);
+            Cipher cipher = getFileCipher(userPath, filename);
 
             return cipher.doFinal(clear);
         } catch (NoSuchAlgorithmException e) {
@@ -64,9 +64,9 @@ public class ServerSecurity {
      * @throws NoSuchPaddingException
      * @throws NoSuchAlgorithmException
      */
-    public Cipher getFileCipher(String filename) throws
+    public Cipher getFileCipher(String userPath, String filename) throws
             InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
-        Key fileKey = loadKeyFromFile(filename);
+        Key fileKey = loadKeyFromFile(userPath, filename);
 
         Cipher cipher = Cipher.getInstance("AES");
         cipher.init(Cipher.ENCRYPT_MODE, fileKey);
@@ -81,9 +81,9 @@ public class ServerSecurity {
      * @throws NoSuchPaddingException
      * @throws NoSuchAlgorithmException
      */
-    public Cipher getFileDecipher(String filename) throws
+    public Cipher getFileDecipher(String userPath, String filename) throws
             InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException{
-        Key fileKey = loadKeyFromFile(filename);
+        Key fileKey = loadKeyFromFile(userPath, filename);
 
         Cipher decipher = Cipher.getInstance("AES");
         decipher.init(Cipher.DECRYPT_MODE, fileKey);
@@ -97,10 +97,10 @@ public class ServerSecurity {
      * @param filename
      * @return clear byte array
      */
-    public byte[] decipher(byte[] ciphered, String filename) {
+    public byte[] decipher(byte[] ciphered, String userPath, String filename) {
 
         try {
-            Cipher cipher = getFileDecipher(filename);
+            Cipher cipher = getFileDecipher(userPath, filename);
 
             return cipher.doFinal(ciphered);
         } catch (NoSuchAlgorithmException e) {
@@ -174,7 +174,7 @@ public class ServerSecurity {
      * @param filename
      * @return bytes from a filename.key file
      */
-    private Key loadKeyFromFile(String filename) {
+    private Key loadKeyFromFile(String userPath, String filename) {
         FileInputStream kis;
         ObjectInputStream ois;
         byte[] key = new byte[AES_KEY_SIZE_BYTES];
@@ -185,8 +185,7 @@ public class ServerSecurity {
             Cipher unwrapper = Cipher.getInstance("RSA");
             unwrapper.init(Cipher.UNWRAP_MODE, privateServerKey);
 
-            kis = new FileInputStream(ServerPaths.SERVER_PATH + ServerPaths.FILE_SEPARATOR +
-                    currentUser + ServerPaths.FILE_SEPARATOR + filename + ".key");
+            kis = new FileInputStream(userPath + filename + ".key");
             ois = new ObjectInputStream(kis);
             byte[] keyEncoded = new byte[256];
             keyEncoded = (byte[]) ois.readObject();
@@ -276,9 +275,8 @@ public class ServerSecurity {
      * @param filename
      * @return
      */
-    public byte[] loadSign(String filename) {
-        String filePath = ServerPaths.SERVER_PATH + currentUser +
-                ServerPaths.FILE_SEPARATOR + filename + ".sig";
+    public byte[] loadSign(String userPath, String filename) {
+        String filePath = userPath + filename + ".sig";
 
         try {
             FileInputStream fis = new FileInputStream(new File (filePath));
@@ -307,7 +305,7 @@ public class ServerSecurity {
      * @param data
      * @return
      */
-    public boolean verifySignature(String filename, byte[] data) {
+    public boolean verifySignature(String filename, String userPath, byte[] data) {
         try {
             Certificate cert = kstore.getCertificate(SERVER_CERTIFICATE_ALIAS);
             PublicKey publicKey = cert.getPublicKey();
@@ -315,7 +313,7 @@ public class ServerSecurity {
             Signature sign = Signature.getInstance("SHA1withRSA");
             sign.initVerify(publicKey);
 
-            byte[] signature = loadSign(filename);
+            byte[] signature = loadSign(userPath, filename);
             sign.update(data);
 
             return sign.verify(signature);
@@ -379,15 +377,15 @@ public class ServerSecurity {
     }
 
 
-    public CipherOutputStream createCipherOutputStream(FileOutputStream fos, String photoName)
+    public CipherOutputStream createCipherOutputStream(FileOutputStream fos, String userPath, String photoName)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
-        Cipher cipher = getFileCipher(photoName);
+        Cipher cipher = getFileCipher(userPath, photoName);
         return new CipherOutputStream(fos, cipher);
     }
 
-    public CipherInputStream createCipherInputStream(FileInputStream fis, String photoName)
+    public CipherInputStream createCipherInputStream(FileInputStream fis, String userPath, String photoName)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
-        Cipher cipher = getFileDecipher(photoName);
+        Cipher cipher = getFileDecipher(userPath, photoName);
         return new CipherInputStream(fis, cipher);
     }
 }

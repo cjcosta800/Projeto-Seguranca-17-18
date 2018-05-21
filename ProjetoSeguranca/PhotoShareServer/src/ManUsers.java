@@ -121,7 +121,7 @@ public class ManUsers {
 
 					userExists = true;
 				} else
-					fileWriter.write(linha);
+					fileWriter.write(linha + "\n");
 
 				linha = fileReader.readLine();
 			}
