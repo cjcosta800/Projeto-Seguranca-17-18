@@ -491,6 +491,8 @@ public class ServerLogic {
 		        oos.flush();
 		        oos.close();
 
+				outputStream.writeObject(0);
+
             }else {
 
                 if (userToFollow.equals(user)) {
